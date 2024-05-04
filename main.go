@@ -6,22 +6,39 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/cdriehuys/recipes/internal/templates"
 )
 
-func index(logger *slog.Logger) http.HandlerFunc {
+type TemplateEngine interface {
+	Write(w io.Writer, name string, data any) error
+}
+
+func index(logger *slog.Logger, templates TemplateEngine) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger.Info("Handling index request.")
 
-		io.WriteString(w, "Hello, world!")
+		if err := templates.Write(w, "index", nil); err != nil {
+			logger.Error("Failed to execute template.", "error", err)
+		}
 	}
 }
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	logOpts := slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &logOpts))
 	logger.Info("Creating request handlers.")
 
+	templateEngine := templates.DiskTemplateEngine{
+		IncludePath: "templates/includes",
+		LayoutPath:  "templates/layouts",
+		Logger:      logger,
+	}
+
 	handler := http.NewServeMux()
-	handler.HandleFunc("/", index(logger))
+	handler.HandleFunc("/", index(logger, &templateEngine))
 
 	server := http.Server{
 		Addr:              "0.0.0.0:8000",

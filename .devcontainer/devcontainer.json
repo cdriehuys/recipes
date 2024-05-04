@@ -12,6 +12,7 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
+				"EditorConfig.EditorConfig",
 				"patbenatar.advanced-new-file"
 			]
 		}
