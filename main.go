@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -11,35 +10,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/cdriehuys/recipes/internal/server"
 	"github.com/cdriehuys/recipes/internal/staticfiles"
 	"github.com/cdriehuys/recipes/internal/templates"
 )
-
-type TemplateEngine interface {
-	Write(w io.Writer, name string, data any) error
-}
-
-func index(logger *slog.Logger, templates TemplateEngine) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		logger.Info("Handling index request.")
-
-		if err := templates.Write(w, "index", nil); err != nil {
-			logger.Error("Failed to execute template.", "error", err)
-		}
-	}
-}
-
-func dbTest(logger *slog.Logger, pool *pgxpool.Pool) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var message string
-		if err := pool.QueryRow(r.Context(), "SELECT 'Hello, database!'").Scan(&message); err != nil {
-			logger.Error("Failed to get database message.", "error", err)
-			return
-		}
-
-		io.WriteString(w, message)
-	}
-}
 
 func dbConnectionURL() url.URL {
 	user := os.Getenv("POSTGRES_USER")
@@ -78,10 +52,15 @@ func main() {
 
 	staticServer := staticfiles.StaticFilesFromDisk{BasePath: "static"}
 
+	state := server.State{
+		Db:             dbpool,
+		Logger:         logger,
+		TemplateEngine: &templateEngine,
+	}
+
 	logger.Info("Creating request handlers.")
 	handler := http.NewServeMux()
-	handler.HandleFunc("/", index(logger, &templateEngine))
-	handler.HandleFunc("/db", dbTest(logger, dbpool))
+	handler.Handle("/", server.MakeHandler(state))
 	handler.Handle("/static/", http.StripPrefix("/static/", &staticServer))
 
 	server := http.Server{
