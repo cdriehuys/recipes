@@ -1,2 +1,5 @@
 # Debug outputs
 __debug*
+
+# Compilation artifacts
+static/*

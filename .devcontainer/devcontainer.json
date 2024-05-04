@@ -6,14 +6,17 @@
 	"service": "app",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	"features": {
-		"ghcr.io/devcontainers/features/github-cli:1": {}
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/node:1": {}
 	},
 
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"EditorConfig.EditorConfig",
-				"patbenatar.advanced-new-file"
+				"patbenatar.advanced-new-file",
+				"ms-azuretools.vscode-docker",
+				"bradlc.vscode-tailwindcss"
 			]
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cdriehuys/recipes/internal/staticfiles"
 	"github.com/cdriehuys/recipes/internal/templates"
 )
 
@@ -37,8 +38,11 @@ func main() {
 		Logger:      logger,
 	}
 
+	staticServer := staticfiles.StaticFilesFromDisk{BasePath: "static"}
+
 	handler := http.NewServeMux()
 	handler.HandleFunc("/", index(logger, &templateEngine))
+	handler.Handle("/static/", http.StripPrefix("/static/", &staticServer))
 
 	server := http.Server{
 		Addr:              "0.0.0.0:8000",
