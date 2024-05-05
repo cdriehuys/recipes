@@ -14,9 +14,10 @@
 		"vscode": {
 			"extensions": [
 				"EditorConfig.EditorConfig",
+				"bradlc.vscode-tailwindcss",
 				"patbenatar.advanced-new-file",
 				"ms-azuretools.vscode-docker",
-				"bradlc.vscode-tailwindcss"
+				"skellock.just"
 			]
 		}
 	}

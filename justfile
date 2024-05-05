@@ -1,13 +1,38 @@
+# Compile the application
 build: clean
     @mkdir build
     @go build -o build/recipes .
 
+# Run application tests
 test:
     go test ./...
 
+# Remove all generated artifacts
 clean:
-    @rm -rf "./static/*" "./build"
+    @rm -rfv ./build ./static/*
 
+# Watch and recompile web assets for development
 dev:
     @mkdir static
     tailwindcss -i static-src/input.css -o static/style.css --watch
+
+migration_dir := justfile_directory() / "migrations"
+
+# Migrate the database to the latest version
+migrate: (_tern "migrate")
+
+# Migration targets may be a migration number, a positive or negative delta, or
+# 0 to revert all migrations.
+#
+# Migrate to a particular state
+migrate-to target: (_tern "migrate" "--destination" target)
+
+# Create a new migration
+new-migration name: (_tern "new" name)
+
+# Use `tern` to execute migrations from the correct working directory.
+_tern +ARGS:
+    #!/usr/bin/env bash
+    set -eufo pipefail
+    cd {{migration_dir}}
+    tern {{ARGS}}
