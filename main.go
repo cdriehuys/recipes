@@ -27,6 +27,14 @@ import (
 //go:embed templates
 var templateFS embed.FS
 
+//go:embed static
+var staticFS embed.FS
+
+type staticServer interface {
+	http.Handler
+	templates.StaticFileFinder
+}
+
 func init() {
 	viper.BindEnv("bind-address", "BIND_ADDRESS")
 	viper.SetDefault("bind-address", ":8000")
@@ -124,17 +132,34 @@ func run(ctx context.Context, logOutput io.Writer) error {
 
 	recipeStore := stores.NewRecipeStore(dbpool)
 
+	var staticServer staticServer
+	if viper.GetBool("dev-mode") {
+		logger.Info("Using live static files.")
+		staticServer = &staticfiles.StaticFilesFromDisk{BasePath: "static"}
+	} else {
+		logger.Info("Using precompiled static files.")
+		static, err := staticfiles.NewHashedStaticFiles(logger, staticFS, "/static/")
+		if err != nil {
+			return fmt.Errorf("failed to collect static files: %w", err)
+		}
+
+		staticServer = &static
+	}
+
+	customFuncs := templates.CustomFunctionMap(staticServer)
+
 	var templateEngine routes.TemplateWriter
 	if viper.GetBool("dev-mode") {
 		logger.Info("Using live reload template engine.")
 		templateEngine = &templates.DiskTemplateEngine{
 			IncludePath: "templates/includes",
 			LayoutPath:  "templates/layouts",
+			FuncMap:     customFuncs,
 			Logger:      logger,
 		}
 	} else {
 		logger.Info("Using embedded templates.")
-		engine, err := templates.NewFSTemplateEngine(templateFS)
+		engine, err := templates.NewFSTemplateEngine(templateFS, customFuncs)
 		if err != nil {
 			return fmt.Errorf("failed to create template engine: %w", err)
 		}
@@ -142,9 +167,7 @@ func run(ctx context.Context, logOutput io.Writer) error {
 		templateEngine = &engine
 	}
 
-	staticServer := staticfiles.StaticFilesFromDisk{BasePath: "static"}
-
-	if err := serveHTTP(ctx, logger, recipeStore, templateEngine, &staticServer); err != nil {
+	if err := serveHTTP(ctx, logger, recipeStore, templateEngine, staticServer); err != nil {
 		return err
 	}
 

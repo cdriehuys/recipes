@@ -13,6 +13,8 @@ type DiskTemplateEngine struct {
 	IncludePath string
 	LayoutPath  string
 
+	FuncMap template.FuncMap
+
 	Logger *slog.Logger
 }
 
@@ -26,7 +28,9 @@ func (e *DiskTemplateEngine) Write(w io.Writer, name string, data any) error {
 	templateFiles := append(includes, templatePath)
 	e.Logger.Debug("Collected template files.", "templateFiles", templateFiles)
 
-	tpl, err := template.ParseFiles(templateFiles...)
+	tpl := template.New(name).Funcs(e.FuncMap)
+
+	tpl, err = tpl.ParseFiles(templateFiles...)
 	if err != nil {
 		return fmt.Errorf("failed to parse template files: %w", err)
 	}

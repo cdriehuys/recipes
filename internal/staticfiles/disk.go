@@ -20,3 +20,7 @@ func (s *StaticFilesFromDisk) ServeHTTP(w http.ResponseWriter, req *http.Request
 
 	http.ServeFile(w, req, filePath)
 }
+
+func (s *StaticFilesFromDisk) FileURL(file string) string {
+	return path.Join("/", s.BasePath, path.Clean(file))
+}

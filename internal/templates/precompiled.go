@@ -23,7 +23,7 @@ func (e *FSTemplateEngine) Write(w io.Writer, name string, data any) error {
 	return tpl.ExecuteTemplate(w, "base", data)
 }
 
-func NewFSTemplateEngine(templates fs.FS) (FSTemplateEngine, error) {
+func NewFSTemplateEngine(templates fs.FS, funcs template.FuncMap) (FSTemplateEngine, error) {
 	includes, err := fs.Glob(templates, path.Join("templates", "includes", "*.html.tmpl"))
 	if err != nil {
 		return FSTemplateEngine{}, fmt.Errorf("failed to find includes: %w", err)
@@ -50,7 +50,7 @@ func NewFSTemplateEngine(templates fs.FS) (FSTemplateEngine, error) {
 
 		templateName := strings.TrimSuffix(relativeToLayoutDir, ".html.tmpl")
 		templateFiles := append(includes, p)
-		tpl := template.New(templateName)
+		tpl := template.New(templateName).Funcs(funcs)
 		tpl, err = tpl.ParseFS(templates, templateFiles...)
 		if err != nil {
 			return fmt.Errorf("failed to parse template for %s: %w", p, err)
