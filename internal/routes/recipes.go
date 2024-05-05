@@ -5,15 +5,24 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cdriehuys/recipes/internal/stores"
+	"github.com/cdriehuys/recipes/internal/domain"
 	"github.com/google/uuid"
 )
+
+func renderRecipeForm(w http.ResponseWriter, templates TemplateWriter, formData, problems map[string]string) error {
+	data := map[string]any{
+		"formData": formData,
+		"problems": problems,
+	}
+
+	return templates.Write(w, "add-recipe", data)
+}
 
 func addRecipeHandler(logger *slog.Logger, templates TemplateWriter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := startRequestLogger(r, logger)
 
-		if err := templates.Write(w, "add-recipe", nil); err != nil {
+		if err := renderRecipeForm(w, templates, nil, nil); err != nil {
 			logger.Error("Failed to execute template.", "error", err)
 		}
 	})
@@ -22,14 +31,25 @@ func addRecipeHandler(logger *slog.Logger, templates TemplateWriter) http.Handle
 func addRecipeFormHandler(
 	logger *slog.Logger,
 	recipeStore RecipeStore,
+	templates TemplateWriter,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := startRequestLogger(r, logger)
 
-		recipe := stores.NewRecipe{
+		recipe := domain.NewRecipe{
 			Id:           uuid.New(),
 			Title:        r.FormValue("title"),
 			Instructions: r.FormValue("instructions"),
+		}
+
+		if problems := recipe.Validate(); len(problems) != 0 {
+			logger.Debug("New recipe form did not validate.", "errors", problems)
+			formData := map[string]string{
+				"title":        recipe.Title,
+				"instructions": recipe.Instructions,
+			}
+			renderRecipeForm(w, templates, formData, problems)
+			return
 		}
 
 		if err := recipeStore.Add(r.Context(), logger, recipe); err != nil {

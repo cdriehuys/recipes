@@ -6,12 +6,13 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/cdriehuys/recipes/internal/domain"
 	"github.com/cdriehuys/recipes/internal/stores"
 	"github.com/google/uuid"
 )
 
 type RecipeStore interface {
-	Add(context.Context, *slog.Logger, stores.NewRecipe) error
+	Add(context.Context, *slog.Logger, domain.NewRecipe) error
 	GetByID(context.Context, *slog.Logger, uuid.UUID) (stores.Recipe, error)
 	List(context.Context, *slog.Logger) ([]stores.RecipeListItem, error)
 }
@@ -28,7 +29,7 @@ func AddRoutes(
 ) {
 	mux.Handle("GET /{$}", indexHandler(logger, templates))
 	mux.Handle("GET /new-recipe", addRecipeHandler(logger, templates))
-	mux.Handle("POST /new-recipe", addRecipeFormHandler(logger, recipeStore))
+	mux.Handle("POST /new-recipe", addRecipeFormHandler(logger, recipeStore, templates))
 	mux.Handle("GET /recipes", listRecipeHandler(logger, recipeStore, templates))
 	mux.Handle("GET /recipes/{recipeID}", getRecipeHandler(logger, recipeStore, templates))
 }

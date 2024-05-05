@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/cdriehuys/recipes/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,13 +19,7 @@ func NewRecipeStore(db *pgxpool.Pool) RecipeStore {
 	return RecipeStore{db}
 }
 
-type NewRecipe struct {
-	Id           uuid.UUID
-	Title        string
-	Instructions string
-}
-
-func (s RecipeStore) Add(ctx context.Context, logger *slog.Logger, recipe NewRecipe) error {
+func (s RecipeStore) Add(ctx context.Context, logger *slog.Logger, recipe domain.NewRecipe) error {
 	query := `
 INSERT INTO recipes (id, title, instructions)
 VALUES ($1, $2, $3)`
