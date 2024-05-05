@@ -9,11 +9,11 @@ test:
 
 # Remove all generated artifacts
 clean:
-    @rm -rfv ./build ./static/*
+    @rm -rfv ./build ./static/* __debug_bin*
 
 # Watch and recompile web assets for development
 dev:
-    @mkdir static
+    @mkdir -p static
     tailwindcss -i static-src/input.css -o static/style.css --watch
 
 migration_dir := justfile_directory() / "migrations"

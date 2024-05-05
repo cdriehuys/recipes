@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -9,23 +10,35 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/spf13/viper"
 
 	"github.com/cdriehuys/recipes/internal/server"
 	"github.com/cdriehuys/recipes/internal/staticfiles"
 	"github.com/cdriehuys/recipes/internal/templates"
 )
 
-func dbConnectionURL() url.URL {
-	user := os.Getenv("POSTGRES_USER")
-	password := os.Getenv("POSTGRES_PASSWORD")
-	host := os.Getenv("POSTGRES_HOSTNAME")
-	db := os.Getenv("POSTGRES_DB")
+//go:embed templates
+var templateFS embed.FS
 
+func init() {
+	viper.BindEnv("bind-address", "BIND_ADDRESS")
+	viper.SetDefault("bind-address", ":8000")
+
+	viper.BindEnv("database.host", "POSTGRES_HOSTNAME")
+	viper.BindEnv("database.name", "POSTGRES_DB")
+	viper.BindEnv("database.password", "POSTGRES_PASSWORD")
+	viper.BindEnv("database.user", "POSTGRES_USER")
+
+	viper.BindEnv("dev-mode", "DEV_MODE")
+	viper.SetDefault("dev-mode", false)
+}
+
+func dbConnectionURL() url.URL {
 	return url.URL{
 		Scheme: "postgres",
-		User:   url.UserPassword(user, password),
-		Host:   host,
-		Path:   db,
+		User:   url.UserPassword(viper.GetString("database.user"), viper.GetString("database.password")),
+		Host:   viper.GetString("database.host"),
+		Path:   viper.GetString("database.name"),
 	}
 }
 
@@ -44,10 +57,23 @@ func main() {
 	defer dbpool.Close()
 	logger.Info("Created database connection pool.")
 
-	templateEngine := templates.DiskTemplateEngine{
-		IncludePath: "templates/includes",
-		LayoutPath:  "templates/layouts",
-		Logger:      logger,
+	var templateEngine server.TemplateEngine
+	if viper.GetBool("dev-mode") {
+		logger.Info("Using live reload template engine.")
+		templateEngine = &templates.DiskTemplateEngine{
+			IncludePath: "templates/includes",
+			LayoutPath:  "templates/layouts",
+			Logger:      logger,
+		}
+	} else {
+		logger.Info("Using embedded templates.")
+		engine, err := templates.NewFSTemplateEngine(templateFS)
+		if err != nil {
+			logger.Error("Failed to create template engine.", "error", err)
+			os.Exit(1)
+		}
+
+		templateEngine = &engine
 	}
 
 	staticServer := staticfiles.StaticFilesFromDisk{BasePath: "static"}
@@ -55,7 +81,7 @@ func main() {
 	state := server.State{
 		Db:             dbpool,
 		Logger:         logger,
-		TemplateEngine: &templateEngine,
+		TemplateEngine: templateEngine,
 	}
 
 	logger.Info("Creating request handlers.")
@@ -64,7 +90,7 @@ func main() {
 	handler.Handle("/static/", http.StripPrefix("/static/", &staticServer))
 
 	server := http.Server{
-		Addr:              "0.0.0.0:8000",
+		Addr:              viper.GetString("bind-address"),
 		Handler:           handler,
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
