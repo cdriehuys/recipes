@@ -1,0 +1,12 @@
+{{ define "content" -}}
+<h1>Recipes</h1>
+{{- if . }}
+<ul>
+{{- range . }}
+  <li><a href="/recipes/{{ .Id }}">{{ .Title }}</a></li>
+</ul>
+{{- end }}
+{{- else }}
+<h2>No Recipes!</h2>
+{{- end }}
+{{- end }}

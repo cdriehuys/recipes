@@ -8,7 +8,19 @@
   </head>
 
   <body>
-    {{ template "content" . }}
+    <header>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/recipes">All Recipes</a></li>
+          <li><a href="/new-recipe">New Recipe</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      {{ template "content" . }}
+    </main>
   </body>
 </html>
 {{- end }}
