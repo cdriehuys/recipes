@@ -1,7 +1,10 @@
-# Compile the application
-build: clean
-    @mkdir build
-    @go build -o build/recipes .
+# Compile a production-ready application build
+build: build-css
+    go build -o build/recipes .
+
+# Build the CSS for the application
+build-css:
+    tailwindcss -i static-src/input.css -o static/style.css --minify
 
 # Run application tests
 test:
