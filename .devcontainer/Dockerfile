@@ -1,5 +1,9 @@
 FROM mcr.microsoft.com/devcontainers/go:1-1.22-bookworm
 
+# Postgresql client for debugging database
+RUN apt-get update \
+    && apt-get install -y postgresql-client
+
 # Install `tailwindcss` and `just`
 RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64 \
     && chmod +x tailwindcss-linux-x64 \

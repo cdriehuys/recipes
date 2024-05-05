@@ -19,6 +19,10 @@ dev:
     @mkdir -p static
     tailwindcss -i static-src/input.css -o static/style.css --watch
 
+# Open shell connected to dev database
+db-shell:
+    @psql --username {{ env_var('POSTGRES_USER') }} --host {{ env_var('POSTGRES_HOSTNAME') }}
+
 migration_dir := justfile_directory() / "migrations"
 
 # Migrate the database to the latest version
