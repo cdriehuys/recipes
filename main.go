@@ -9,14 +9,13 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/spf13/viper"
 
+	"github.com/cdriehuys/recipes/internal/config"
 	"github.com/cdriehuys/recipes/internal/routes"
 	"github.com/cdriehuys/recipes/internal/server"
 	"github.com/cdriehuys/recipes/internal/staticfiles"
@@ -35,38 +34,17 @@ type staticServer interface {
 	templates.StaticFileFinder
 }
 
-func init() {
-	viper.BindEnv("bind-address", "BIND_ADDRESS")
-	viper.SetDefault("bind-address", ":8000")
-
-	viper.BindEnv("database.host", "POSTGRES_HOSTNAME")
-	viper.BindEnv("database.name", "POSTGRES_DB")
-	viper.BindEnv("database.password", "POSTGRES_PASSWORD")
-	viper.BindEnv("database.user", "POSTGRES_USER")
-
-	viper.BindEnv("dev-mode", "DEV_MODE")
-	viper.SetDefault("dev-mode", false)
-}
-
-func dbConnectionURL() url.URL {
-	return url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(viper.GetString("database.user"), viper.GetString("database.password")),
-		Host:   viper.GetString("database.host"),
-		Path:   viper.GetString("database.name"),
-	}
-}
-
 func serveHTTP(
 	ctx context.Context,
 	logger *slog.Logger,
+	config *config.Config,
 	recipeStore routes.RecipeStore,
 	templateEngine routes.TemplateWriter,
 	staticServer http.Handler,
 ) error {
 	svr := server.NewServer(logger, templateEngine, recipeStore, staticServer)
 	httpServer := http.Server{
-		Addr:              viper.GetString("bind-address"),
+		Addr:              config.BindAddr,
 		Handler:           svr,
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
@@ -117,12 +95,14 @@ func run(ctx context.Context, logOutput io.Writer) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
+	config := config.FromEnvironment()
+
 	logOpts := slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}
 	logger := slog.New(slog.NewTextHandler(logOutput, &logOpts))
 
-	connURL := dbConnectionURL()
+	connURL := config.Database.ConnectionURL()
 	dbpool, err := pgxpool.New(ctx, connURL.String())
 	if err != nil {
 		return fmt.Errorf("unable to create database connection pool: %w", err)
@@ -133,7 +113,7 @@ func run(ctx context.Context, logOutput io.Writer) error {
 	recipeStore := stores.NewRecipeStore(dbpool)
 
 	var staticServer staticServer
-	if viper.GetBool("dev-mode") {
+	if config.DevMode {
 		logger.Info("Using live static files.")
 		staticServer = &staticfiles.StaticFilesFromDisk{BasePath: "static"}
 	} else {
@@ -149,7 +129,7 @@ func run(ctx context.Context, logOutput io.Writer) error {
 	customFuncs := templates.CustomFunctionMap(staticServer)
 
 	var templateEngine routes.TemplateWriter
-	if viper.GetBool("dev-mode") {
+	if config.DevMode {
 		logger.Info("Using live reload template engine.")
 		templateEngine = &templates.DiskTemplateEngine{
 			IncludePath: "templates/includes",
@@ -167,7 +147,7 @@ func run(ctx context.Context, logOutput io.Writer) error {
 		templateEngine = &engine
 	}
 
-	if err := serveHTTP(ctx, logger, recipeStore, templateEngine, staticServer); err != nil {
+	if err := serveHTTP(ctx, logger, &config, recipeStore, templateEngine, staticServer); err != nil {
 		return err
 	}
 
