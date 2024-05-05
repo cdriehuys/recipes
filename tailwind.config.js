@@ -2,7 +2,9 @@
 module.exports = {
   content: ["templates/**/*.html.tmpl"],
   theme: {
-    extend: {},
+    fontFamily: {
+      "serif": 'Lora, ui-serif, Georgia, Cambria, "Times New Roman", Times, serif'
+    },
   },
   plugins: [],
 }
