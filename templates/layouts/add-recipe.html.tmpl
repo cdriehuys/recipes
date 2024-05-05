@@ -1,0 +1,10 @@
+{{ define "content" -}}
+<h1>New Recipe</h1>
+<form method="POST">
+  <label for="recipe-title">Title</label>
+  <input id="recipe-title" name="title" required>
+  <label for="recipe-instructions">Instructions</label>
+  <textarea></textarea>
+  <button type="submit">Submit</button>
+</form>
+{{- end }}
