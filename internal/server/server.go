@@ -10,11 +10,13 @@ import (
 func NewServer(
 	logger *slog.Logger,
 	templates routes.TemplateWriter,
+	oauthConfig routes.OAuthConfig,
 	recipeStore routes.RecipeStore,
+	userStore routes.UserStore,
 	staticServer http.Handler,
 ) http.Handler {
 	handler := http.NewServeMux()
-	routes.AddRoutes(handler, logger, recipeStore, templates)
+	routes.AddRoutes(handler, logger, oauthConfig, recipeStore, userStore, templates)
 
 	handler.Handle("/static/", http.StripPrefix("/static/", staticServer))
 

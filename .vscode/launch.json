@@ -11,8 +11,10 @@
             "mode": "auto",
             "program": ".",
             "env": {
-                "DEV_MODE": "true"
-            }
+                "DEV_MODE": "true",
+                "OAUTH_CALLBACK_URL": "http://localhost:8000/auth/callback"
+            },
+            "envFile": "${workspaceFolder}/.env",
         }
     ]
 }

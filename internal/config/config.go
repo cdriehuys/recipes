@@ -19,6 +19,11 @@ type Config struct {
 	// caching of static files to aid in development tasks. These features are less performant than
 	// the default production-oriented configuration.
 	DevMode bool
+
+	GoogleClientID     string
+	GoogleClientSecret string
+
+	OAuthCallbackURL string
 }
 
 type DatabaseConfig struct {
@@ -65,6 +70,11 @@ func init() {
 
 	viper.BindEnv("dev-mode", "DEV_MODE")
 	viper.SetDefault("dev-mode", false)
+
+	viper.BindEnv("google-client-id", "GOOGLE_CLIENT_ID")
+	viper.BindEnv("google-client-secret", "GOOGLE_CLIENT_SECRET")
+
+	viper.BindEnv("oauth-callback-url", "OAUTH_CALLBACK_URL")
 }
 
 func FromEnvironment() Config {
@@ -77,6 +87,9 @@ func FromEnvironment() Config {
 			Port:     viper.GetString("database.port"),
 			Name:     viper.GetString("database.name"),
 		},
-		DevMode: viper.GetBool("dev-mode"),
+		DevMode:            viper.GetBool("dev-mode"),
+		GoogleClientID:     viper.GetString("google-client-id"),
+		GoogleClientSecret: viper.GetString("google-client-secret"),
+		OAuthCallbackURL:   viper.GetString("oauth-callback-url"),
 	}
 }

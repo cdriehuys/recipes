@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 
 	"github.com/cdriehuys/recipes/internal/config"
 	"github.com/cdriehuys/recipes/internal/routes"
@@ -38,11 +40,13 @@ func serveHTTP(
 	ctx context.Context,
 	logger *slog.Logger,
 	config *config.Config,
+	oauthConfig routes.OAuthConfig,
 	recipeStore routes.RecipeStore,
+	userStore routes.UserStore,
 	templateEngine routes.TemplateWriter,
 	staticServer http.Handler,
 ) error {
-	svr := server.NewServer(logger, templateEngine, recipeStore, staticServer)
+	svr := server.NewServer(logger, templateEngine, oauthConfig, recipeStore, userStore, staticServer)
 	httpServer := http.Server{
 		Addr:              config.BindAddr,
 		Handler:           svr,
@@ -102,6 +106,14 @@ func run(ctx context.Context, logOutput io.Writer) error {
 	}
 	logger := slog.New(slog.NewTextHandler(logOutput, &logOpts))
 
+	oauthConfig := oauth2.Config{
+		ClientID:     config.GoogleClientID,
+		ClientSecret: config.GoogleClientSecret,
+		Endpoint:     google.Endpoint,
+		RedirectURL:  config.OAuthCallbackURL,
+		Scopes:       []string{"openid"},
+	}
+
 	connURL := config.Database.ConnectionURL()
 	dbpool, err := pgxpool.New(ctx, connURL.String())
 	if err != nil {
@@ -111,6 +123,7 @@ func run(ctx context.Context, logOutput io.Writer) error {
 	logger.Info("Created database connection pool.")
 
 	recipeStore := stores.NewRecipeStore(dbpool)
+	userStore := stores.NewUserStore(dbpool)
 
 	var staticServer staticServer
 	if config.DevMode {
@@ -147,7 +160,16 @@ func run(ctx context.Context, logOutput io.Writer) error {
 		templateEngine = &engine
 	}
 
-	if err := serveHTTP(ctx, logger, &config, recipeStore, templateEngine, staticServer); err != nil {
+	if err := serveHTTP(
+		ctx,
+		logger,
+		&config,
+		&oauthConfig,
+		recipeStore,
+		userStore,
+		templateEngine,
+		staticServer,
+	); err != nil {
 		return err
 	}
 
