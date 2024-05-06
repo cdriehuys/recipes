@@ -12,7 +12,8 @@
             "program": ".",
             "env": {
                 "DEV_MODE": "true",
-                "OAUTH_CALLBACK_URL": "http://localhost:8000/auth/callback"
+                "OAUTH_CALLBACK_URL": "http://localhost:8000/auth/callback",
+                "SECRET_KEY": "test",
             },
             "envFile": "${workspaceFolder}/.env",
         }

@@ -3,6 +3,7 @@
   <h1 class="mb-8 text-3xl">Finish Registration</h1>
   {{ if .problems -}}<p class="mb-4 pl-2 border-l-2 border-l-red-700 lg:mb-6">Please correct the following problems.</p>{{- end }}
   <form method="POST">
+    {{ .csrfField }}
     <div class="mb-4 lg:mb-6">
       <label class="block mb-1 text-xl after:content-['*'] after:text-red-700" for="name">Name</label>
       <input class="block w-full p-1 border border-slate-600" id="name" name="name" required value="{{ .formData.name }}">

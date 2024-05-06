@@ -24,6 +24,8 @@ type Config struct {
 	GoogleClientSecret string
 
 	OAuthCallbackURL string
+
+	SecretKey []byte
 }
 
 type DatabaseConfig struct {
@@ -75,6 +77,8 @@ func init() {
 	viper.BindEnv("google-client-secret", "GOOGLE_CLIENT_SECRET")
 
 	viper.BindEnv("oauth-callback-url", "OAUTH_CALLBACK_URL")
+
+	viper.BindEnv("secret-key", "SECRET_KEY")
 }
 
 func FromEnvironment() Config {
@@ -91,5 +95,6 @@ func FromEnvironment() Config {
 		GoogleClientID:     viper.GetString("google-client-id"),
 		GoogleClientSecret: viper.GetString("google-client-secret"),
 		OAuthCallbackURL:   viper.GetString("oauth-callback-url"),
+		SecretKey:          []byte(viper.GetString("secret-key")),
 	}
 }

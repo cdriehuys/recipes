@@ -43,10 +43,10 @@ func serveHTTP(
 	oauthConfig routes.OAuthConfig,
 	recipeStore routes.RecipeStore,
 	userStore routes.UserStore,
-	templateEngine routes.TemplateWriter,
+	templateEngine server.TemplateWriter,
 	staticServer http.Handler,
 ) error {
-	svr := server.NewServer(logger, templateEngine, oauthConfig, recipeStore, userStore, staticServer)
+	svr := server.NewServer(logger, config, templateEngine, oauthConfig, recipeStore, userStore, staticServer)
 	httpServer := http.Server{
 		Addr:              config.BindAddr,
 		Handler:           svr,
@@ -141,7 +141,7 @@ func run(ctx context.Context, logOutput io.Writer) error {
 
 	customFuncs := templates.CustomFunctionMap(staticServer)
 
-	var templateEngine routes.TemplateWriter
+	var templateEngine server.TemplateWriter
 	if config.DevMode {
 		logger.Info("Using live reload template engine.")
 		templateEngine = &templates.DiskTemplateEngine{

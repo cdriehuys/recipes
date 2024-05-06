@@ -63,20 +63,20 @@ func oauthCallbackHandler(
 	})
 }
 
-func renderRegistrationForm(w http.ResponseWriter, templates TemplateWriter, formData, problems map[string]string) error {
+func renderRegistrationForm(w http.ResponseWriter, r *http.Request, templates TemplateWriter, formData, problems map[string]string) error {
 	data := map[string]any{
 		"formData": formData,
 		"problems": problems,
 	}
 
-	return templates.Write(w, "complete-registration", data)
+	return templates.Write(w, r, "complete-registration", data)
 }
 
 func registerHandler(logger *slog.Logger, templates TemplateWriter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := startRequestLogger(r, logger)
 
-		if err := renderRegistrationForm(w, templates, nil, nil); err != nil {
+		if err := renderRegistrationForm(w, r, templates, nil, nil); err != nil {
 			logger.Error("Failed to execute template.", "error", err)
 		}
 	})
@@ -93,7 +93,7 @@ func registerFormHandler(logger *slog.Logger, userStore UserStore, templates Tem
 		if problems := userInfo.Validate(); len(problems) != 0 {
 			logger.Debug("User details failed validation.", "problems", problems)
 			formData := map[string]string{"name": userInfo.Name}
-			renderRegistrationForm(w, templates, formData, problems)
+			renderRegistrationForm(w, r, templates, formData, problems)
 		}
 
 		if err := userStore.UpdateDetails(r.Context(), logger, "?", userInfo); err != nil {

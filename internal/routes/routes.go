@@ -30,7 +30,7 @@ type UserStore interface {
 }
 
 type TemplateWriter interface {
-	Write(io.Writer, string, any) error
+	Write(io.Writer, *http.Request, string, map[string]any) error
 }
 
 func AddRoutes(

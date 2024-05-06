@@ -14,7 +14,7 @@ type FSTemplateEngine struct {
 	templates map[string]*template.Template
 }
 
-func (e *FSTemplateEngine) Write(w io.Writer, name string, data any) error {
+func (e *FSTemplateEngine) Write(w io.Writer, name string, data map[string]any) error {
 	tpl, ok := e.templates[name]
 	if !ok {
 		return fmt.Errorf("no template named '%s'", name)

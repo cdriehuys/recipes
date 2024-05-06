@@ -9,20 +9,20 @@ import (
 	"github.com/google/uuid"
 )
 
-func renderRecipeForm(w http.ResponseWriter, templates TemplateWriter, formData, problems map[string]string) error {
+func renderRecipeForm(w http.ResponseWriter, r *http.Request, templates TemplateWriter, formData, problems map[string]string) error {
 	data := map[string]any{
 		"formData": formData,
 		"problems": problems,
 	}
 
-	return templates.Write(w, "add-recipe", data)
+	return templates.Write(w, r, "add-recipe", data)
 }
 
 func addRecipeHandler(logger *slog.Logger, templates TemplateWriter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := startRequestLogger(r, logger)
 
-		if err := renderRecipeForm(w, templates, nil, nil); err != nil {
+		if err := renderRecipeForm(w, r, templates, nil, nil); err != nil {
 			logger.Error("Failed to execute template.", "error", err)
 		}
 	})
@@ -48,7 +48,7 @@ func addRecipeFormHandler(
 				"title":        recipe.Title,
 				"instructions": recipe.Instructions,
 			}
-			renderRecipeForm(w, templates, formData, problems)
+			renderRecipeForm(w, r, templates, formData, problems)
 			return
 		}
 
@@ -84,7 +84,8 @@ func listRecipeHandler(
 			return
 		}
 
-		if err := templates.Write(w, "recipe-list", recipes); err != nil {
+		data := map[string]any{"recipes": recipes}
+		if err := templates.Write(w, r, "recipe-list", data); err != nil {
 			logger.Error("Failed to render template.", "error", err)
 		}
 	}
@@ -113,7 +114,8 @@ func getRecipeHandler(
 			return
 		}
 
-		if err := templates.Write(w, "recipe", recipe); err != nil {
+		data := map[string]any{"recipe": recipe}
+		if err := templates.Write(w, r, "recipe", data); err != nil {
 			logger.Error("Failed to render template.", "error", err)
 		}
 	}
