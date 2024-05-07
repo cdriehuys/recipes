@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": ".",
+            "program": "./cmd/recipes/main.go",
             "env": {
                 "DEV_MODE": "true",
                 "OAUTH_CALLBACK_URL": "http://localhost:8000/auth/callback",

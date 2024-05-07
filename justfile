@@ -1,6 +1,8 @@
+recipes_bin := justfile_directory() / "cmd/recipes/main.go"
+
 # Compile a production-ready application build
 build: build-css
-    go build -o build/recipes .
+    go build -o build/recipes "{{ recipes_bin }}"
 
 # Build the CSS for the application
 build-css:
