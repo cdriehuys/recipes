@@ -5,5 +5,8 @@ __debug*
 build
 static/*
 
+# Test artifacts
+coverage.out
+
 # Local configuration
 .env
