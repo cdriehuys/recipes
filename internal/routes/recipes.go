@@ -18,8 +18,8 @@ func renderRecipeForm(w http.ResponseWriter, r *http.Request, templates Template
 	return templates.Write(w, r, "add-recipe", data)
 }
 
-func addRecipeHandler(logger *slog.Logger, templates TemplateWriter) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func addRecipeHandler(logger *slog.Logger, templates TemplateWriter) AuthenticatedHandler {
+	return AuthHandlerFunc(func(w http.ResponseWriter, r *http.Request, userID string) {
 		logger := startRequestLogger(r, logger)
 
 		if err := renderRecipeForm(w, r, templates, nil, nil); err != nil {
@@ -32,12 +32,13 @@ func addRecipeFormHandler(
 	logger *slog.Logger,
 	recipeStore RecipeStore,
 	templates TemplateWriter,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+) AuthenticatedHandler {
+	return AuthHandlerFunc(func(w http.ResponseWriter, r *http.Request, userID string) {
 		logger := startRequestLogger(r, logger)
 
 		recipe := domain.NewRecipe{
 			Id:           uuid.New(),
+			Owner:        userID,
 			Title:        r.FormValue("title"),
 			Instructions: r.FormValue("instructions"),
 		}
@@ -66,18 +67,18 @@ func addRecipeFormHandler(
 		}
 
 		http.Redirect(w, r, recipePath, http.StatusSeeOther)
-	}
+	})
 }
 
 func listRecipeHandler(
 	logger *slog.Logger,
 	recipeStore RecipeStore,
 	templates TemplateWriter,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+) AuthenticatedHandler {
+	return AuthHandlerFunc(func(w http.ResponseWriter, r *http.Request, userID string) {
 		logger := startRequestLogger(r, logger)
 
-		recipes, err := recipeStore.List(r.Context(), logger)
+		recipes, err := recipeStore.List(r.Context(), logger, userID)
 		if err != nil {
 			logger.Error("Failed to read recipes from database.", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -88,15 +89,15 @@ func listRecipeHandler(
 		if err := templates.Write(w, r, "recipe-list", data); err != nil {
 			logger.Error("Failed to render template.", "error", err)
 		}
-	}
+	})
 }
 
 func getRecipeHandler(
 	logger *slog.Logger,
 	recipeStore RecipeStore,
 	templates TemplateWriter,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+) AuthenticatedHandler {
+	return AuthHandlerFunc(func(w http.ResponseWriter, r *http.Request, userID string) {
 		logger := startRequestLogger(r, logger)
 
 		rawID := r.PathValue("recipeID")
@@ -107,7 +108,7 @@ func getRecipeHandler(
 			return
 		}
 
-		recipe, err := recipeStore.GetByID(r.Context(), logger, id)
+		recipe, err := recipeStore.GetByID(r.Context(), logger, userID, id)
 		if err != nil {
 			logger.Error("Failed to fetch recipe by ID.", "id", id, "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -118,5 +119,5 @@ func getRecipeHandler(
 		if err := templates.Write(w, r, "recipe", data); err != nil {
 			logger.Error("Failed to render template.", "error", err)
 		}
-	}
+	})
 }

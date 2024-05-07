@@ -21,10 +21,17 @@ func NewRecipeStore(db *pgxpool.Pool) RecipeStore {
 
 func (s RecipeStore) Add(ctx context.Context, logger *slog.Logger, recipe domain.NewRecipe) error {
 	query := `
-INSERT INTO recipes (id, title, instructions)
-VALUES ($1, $2, $3)`
+INSERT INTO recipes (id, owner, title, instructions)
+VALUES ($1, $2, $3, $4)`
 
-	if _, err := s.db.Exec(ctx, query, recipe.Id, recipe.Title, recipe.Instructions); err != nil {
+	if _, err := s.db.Exec(
+		ctx,
+		query,
+		recipe.Id,
+		recipe.Owner,
+		recipe.Title,
+		recipe.Instructions,
+	); err != nil {
 		return fmt.Errorf("failed to insert new recipe: %w", err)
 	}
 
@@ -38,11 +45,11 @@ type Recipe struct {
 	Instructions string
 }
 
-func (s RecipeStore) GetByID(ctx context.Context, logger *slog.Logger, id uuid.UUID) (Recipe, error) {
-	query := `SELECT title, instructions FROM recipes WHERE id = $1`
+func (s RecipeStore) GetByID(ctx context.Context, logger *slog.Logger, owner string, id uuid.UUID) (Recipe, error) {
+	query := `SELECT title, instructions FROM recipes WHERE owner = $1 AND id = $2`
 
 	var recipe Recipe
-	err := s.db.QueryRow(ctx, query, id).Scan(&recipe.Title, &recipe.Instructions)
+	err := s.db.QueryRow(ctx, query, owner, id).Scan(&recipe.Title, &recipe.Instructions)
 	if err != nil {
 		return Recipe{}, fmt.Errorf("failed to query for recipe with ID %s: %w", id, err)
 	}
@@ -55,9 +62,9 @@ type RecipeListItem struct {
 	Title string
 }
 
-func (s RecipeStore) List(ctx context.Context, logger *slog.Logger) ([]RecipeListItem, error) {
-	query := `SELECT id, title FROM recipes LIMIT 100`
-	rows, err := s.db.Query(ctx, query)
+func (s RecipeStore) List(ctx context.Context, logger *slog.Logger, owner string) ([]RecipeListItem, error) {
+	query := `SELECT id, title FROM recipes WHERE owner = $1 LIMIT 100`
+	rows, err := s.db.Query(ctx, query, owner)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list recipes: %w", err)
 	}

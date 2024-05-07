@@ -166,8 +166,8 @@ func renderRegistrationForm(w http.ResponseWriter, r *http.Request, templates Te
 	return templates.Write(w, r, "complete-registration", data)
 }
 
-func registerHandler(logger *slog.Logger, templates TemplateWriter) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func registerHandler(logger *slog.Logger, templates TemplateWriter) AuthenticatedHandler {
+	return AuthHandlerFunc(func(w http.ResponseWriter, r *http.Request, userID string) {
 		logger := startRequestLogger(r, logger)
 
 		if err := renderRegistrationForm(w, r, templates, nil, nil); err != nil {
@@ -176,16 +176,13 @@ func registerHandler(logger *slog.Logger, templates TemplateWriter) http.Handler
 	})
 }
 
-func registerFormHandler(logger *slog.Logger, sessions SessionStore, userStore UserStore, templates TemplateWriter) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func registerFormHandler(
+	logger *slog.Logger,
+	userStore UserStore,
+	templates TemplateWriter,
+) AuthenticatedHandler {
+	return AuthHandlerFunc(func(w http.ResponseWriter, r *http.Request, userID string) {
 		logger := startRequestLogger(r, logger)
-
-		userID, err := sessions.UserID(r)
-		if err != nil {
-			logger.Error("Could not pull user ID for authenticated route.", "error", err)
-			http.Error(w, "Failed to retrieve user ID.", http.StatusInternalServerError)
-			return
-		}
 
 		userInfo := domain.UserDetails{
 			Name: r.FormValue("name"),

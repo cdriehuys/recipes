@@ -27,8 +27,8 @@ type SessionStore interface {
 
 type RecipeStore interface {
 	Add(context.Context, *slog.Logger, domain.NewRecipe) error
-	GetByID(context.Context, *slog.Logger, uuid.UUID) (stores.Recipe, error)
-	List(context.Context, *slog.Logger) ([]stores.RecipeListItem, error)
+	GetByID(context.Context, *slog.Logger, string, uuid.UUID) (stores.Recipe, error)
+	List(context.Context, *slog.Logger, string) ([]stores.RecipeListItem, error)
 }
 
 type UserStore interface {
@@ -54,7 +54,7 @@ func AddRoutes(
 	mux.Handle("GET /{$}", indexHandler(logger, templates))
 	mux.Handle("GET /auth/callback", oauthCallbackHandler(logger, oauthConfig, sessionStore, userStore))
 	mux.Handle("GET /auth/complete-registration", authMiddleware(registerHandler(logger, templates)))
-	mux.Handle("POST /auth/complete-registration", authMiddleware(registerFormHandler(logger, sessionStore, userStore, templates)))
+	mux.Handle("POST /auth/complete-registration", authMiddleware(registerFormHandler(logger, userStore, templates)))
 	mux.Handle("GET /auth/login", loginHandler(oauthConfig))
 	mux.Handle("GET /new-recipe", authMiddleware(addRecipeHandler(logger, templates)))
 	mux.Handle("POST /new-recipe", authMiddleware(addRecipeFormHandler(logger, recipeStore, templates)))
@@ -69,10 +69,11 @@ func startRequestLogger(req *http.Request, parent *slog.Logger) *slog.Logger {
 	return logger
 }
 
-func requireAuth(session SessionStore) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
+func requireAuth(session SessionStore) func(AuthenticatedHandler) http.Handler {
+	return func(h AuthenticatedHandler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !session.IsAuthenticated(r) {
+			userID, err := session.UserID(r)
+			if err != nil || userID == "" {
 				loginParams := url.Values{}
 				loginParams.Set("next", r.URL.Path)
 
@@ -82,9 +83,20 @@ func requireAuth(session SessionStore) func(http.Handler) http.Handler {
 				}
 
 				http.Redirect(w, r, login.String(), http.StatusSeeOther)
-			} else {
-				h.ServeHTTP(w, r)
+				return
 			}
+
+			h.ServeHTTP(w, r, userID)
 		})
 	}
+}
+
+type AuthenticatedHandler interface {
+	ServeHTTP(http.ResponseWriter, *http.Request, string)
+}
+
+type AuthHandlerFunc func(http.ResponseWriter, *http.Request, string)
+
+func (f AuthHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request, id string) {
+	f(w, r, id)
 }

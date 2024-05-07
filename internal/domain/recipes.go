@@ -8,6 +8,7 @@ import (
 
 type NewRecipe struct {
 	Id           uuid.UUID
+	Owner        string
 	Title        string
 	Instructions string
 }
