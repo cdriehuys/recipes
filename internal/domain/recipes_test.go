@@ -2,6 +2,7 @@ package domain
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -45,6 +46,16 @@ func TestNewRecipe_Validate(t *testing.T) {
 			want: map[string]string{
 				"title":        "This field is required.",
 				"instructions": "This field is required.",
+			},
+		},
+		{
+			name: "title too long",
+			fields: fields{
+				Title:        strings.Repeat("a", 201),
+				Instructions: "Do the thing.",
+			},
+			want: map[string]string{
+				"title": "Title must be 200 characters or less.",
 			},
 		},
 	}

@@ -8,6 +8,9 @@ CREATE TABLE recipes (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE recipes ADD CONSTRAINT recipes_title_len
+CHECK (length(title) < 201);
+
 {{ template "shared/update_time.sql" "recipes" }}
 
 ---- create above / drop below ----
