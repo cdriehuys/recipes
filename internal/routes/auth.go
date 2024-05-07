@@ -4,16 +4,43 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/cdriehuys/recipes/internal/domain"
+	"github.com/google/uuid"
 )
 
-func loginHandler(logger *slog.Logger, oauthConfig OAuthConfig) http.Handler {
+const oauthStateCookie = "recipes.state"
+
+func loginHandler(oauthConfig OAuthConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := oauthConfig.AuthCodeURL("state")
+		nonce := uuid.New().String()
+		cookie := http.Cookie{
+			Name:     oauthStateCookie,
+			Value:    url.QueryEscape(nonce),
+			MaxAge:   int((5 * time.Minute).Seconds()),
+			HttpOnly: true,
+
+			// Because the OAuth callback is a redirect from a different site, this cannot be set to
+			// `Strict`.
+			SameSite: http.SameSiteLaxMode,
+		}
+		http.SetCookie(w, &cookie)
+
+		url := oauthConfig.AuthCodeURL(nonce)
 
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	})
+}
+
+func _oauthNonce(r *http.Request) (string, error) {
+	cookie, err := r.Cookie(oauthStateCookie)
+	if err != nil {
+		return "", err
+	}
+
+	return url.QueryUnescape(cookie.Value)
 }
 
 func oauthCallbackHandler(
@@ -23,6 +50,38 @@ func oauthCallbackHandler(
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := startRequestLogger(r, logger)
+
+		// Remove the nonce cookie immediately.
+		http.SetCookie(w, &http.Cookie{
+			Name:     oauthStateCookie,
+			Value:    "",
+			Expires:  time.Unix(0, 0),
+			HttpOnly: true,
+		})
+
+		expectedNonce, err := _oauthNonce(r)
+		if err != nil {
+			logger.Info("No OAuth nonce cookie.", "error", err)
+
+			// TODO: Return template prompting user to retry login flow
+			http.Error(w, "Invalid OAuth request.", http.StatusBadRequest)
+			return
+		}
+
+		receivedNonce := r.URL.Query().Get("state")
+		if receivedNonce != expectedNonce {
+			logger.Warn(
+				"Mismatched nonce. Possibly tampered OAuth flow.",
+				"expected",
+				expectedNonce,
+				"received",
+				receivedNonce,
+			)
+
+			// TODO: Template response
+			http.Error(w, "Invalid OAuth request.", http.StatusBadRequest)
+			return
+		}
 
 		code := r.URL.Query().Get("code")
 

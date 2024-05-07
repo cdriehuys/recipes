@@ -45,7 +45,7 @@ func AddRoutes(
 	mux.Handle("GET /auth/callback", oauthCallbackHandler(logger, oauthConfig, userStore))
 	mux.Handle("GET /auth/complete-registration", registerHandler(logger, templates))
 	mux.Handle("POST /auth/complete-registration", registerFormHandler(logger, userStore, templates))
-	mux.Handle("GET /auth/login", loginHandler(logger, oauthConfig))
+	mux.Handle("GET /auth/login", loginHandler(oauthConfig))
 	mux.Handle("GET /new-recipe", addRecipeHandler(logger, templates))
 	mux.Handle("POST /new-recipe", addRecipeFormHandler(logger, recipeStore, templates))
 	mux.Handle("GET /recipes", listRecipeHandler(logger, recipeStore, templates))
