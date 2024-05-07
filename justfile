@@ -8,7 +8,14 @@ build-css:
 
 # Run application tests
 test *OPTS='':
+    @# Embedding the static directory requires it to exist and have embeddable
+    @# files.
+    @mkdir -p static
+    @touch static/style.css
     go test {{OPTS}} ./...
+
+# Test with coverage reporting
+test-cov: (test '-race' '-coverprofile=coverage.out' '-covermode=atomic')
 
 # Remove all generated artifacts
 clean:

@@ -1,5 +1,7 @@
 # Recipes
 
+[![codecov](https://codecov.io/gh/cdriehuys/recipes/graph/badge.svg?token=5pKiYfFX59)](https://codecov.io/gh/cdriehuys/recipes)
+
 A web app written in Go to organize recipes.
 
 ## Development
