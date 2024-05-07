@@ -176,9 +176,16 @@ func registerHandler(logger *slog.Logger, templates TemplateWriter) http.Handler
 	})
 }
 
-func registerFormHandler(logger *slog.Logger, userStore UserStore, templates TemplateWriter) http.Handler {
+func registerFormHandler(logger *slog.Logger, sessions SessionStore, userStore UserStore, templates TemplateWriter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := startRequestLogger(r, logger)
+
+		userID, err := sessions.UserID(r)
+		if err != nil {
+			logger.Error("Could not pull user ID for authenticated route.", "error", err)
+			http.Error(w, "Failed to retrieve user ID.", http.StatusInternalServerError)
+			return
+		}
 
 		userInfo := domain.UserDetails{
 			Name: r.FormValue("name"),
@@ -190,7 +197,7 @@ func registerFormHandler(logger *slog.Logger, userStore UserStore, templates Tem
 			renderRegistrationForm(w, r, templates, formData, problems)
 		}
 
-		if err := userStore.UpdateDetails(r.Context(), logger, "?", userInfo); err != nil {
+		if err := userStore.UpdateDetails(r.Context(), logger, userID, userInfo); err != nil {
 			logger.Error("Failed to update user details.", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
