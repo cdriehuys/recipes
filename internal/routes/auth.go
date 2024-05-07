@@ -195,6 +195,7 @@ func registerFormHandler(logger *slog.Logger, sessions SessionStore, userStore U
 			logger.Debug("User details failed validation.", "problems", problems)
 			formData := map[string]string{"name": userInfo.Name}
 			renderRegistrationForm(w, r, templates, formData, problems)
+			return
 		}
 
 		if err := userStore.UpdateDetails(r.Context(), logger, userID, userInfo); err != nil {

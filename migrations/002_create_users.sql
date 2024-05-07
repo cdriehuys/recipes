@@ -6,6 +6,8 @@ CREATE TABLE users (
     last_login TIMESTAMPTZ
 );
 
+ALTER TABLE "users" ADD CONSTRAINT "users_name_len" CHECK (length("name") < 51);
+
 {{ template "shared/update_time.sql" "users" }}
 
 ---- create above / drop below ----

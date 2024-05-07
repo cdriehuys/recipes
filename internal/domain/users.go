@@ -13,5 +13,9 @@ func (d UserDetails) Validate() map[string]string {
 		problems["name"] = "This field is required."
 	}
 
+	if len(d.Name) > 50 {
+		problems["name"] = "Your name cannot be more than 50 characters."
+	}
+
 	return problems
 }
