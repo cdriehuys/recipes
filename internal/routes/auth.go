@@ -28,7 +28,11 @@ func loginHandler(oauthConfig OAuthConfig) http.Handler {
 		}
 		http.SetCookie(w, &cookie)
 
-		url := oauthConfig.AuthCodeURL(nonce)
+		state := url.Values{}
+		state.Set("next", r.URL.Query().Get("next"))
+		state.Set("nonce", nonce)
+
+		url := oauthConfig.AuthCodeURL(state.Encode())
 
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	})
@@ -46,6 +50,7 @@ func _oauthNonce(r *http.Request) (string, error) {
 func oauthCallbackHandler(
 	logger *slog.Logger,
 	oauthConfig OAuthConfig,
+	session SessionStore,
 	userStore UserStore,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +73,15 @@ func oauthCallbackHandler(
 			return
 		}
 
-		receivedNonce := r.URL.Query().Get("state")
+		rawState := r.URL.Query().Get("state")
+		state, err := url.ParseQuery(rawState)
+		if err != nil {
+			logger.Warn("Malformed state received.", "error", err)
+			http.Error(w, "Malformed state parameter.", http.StatusBadRequest)
+			return
+		}
+
+		receivedNonce := state.Get("nonce")
 		if receivedNonce != expectedNonce {
 			logger.Warn(
 				"Mismatched nonce. Possibly tampered OAuth flow.",
@@ -110,15 +123,37 @@ func oauthCallbackHandler(
 			return
 		}
 
-		_, err = userStore.RecordLogIn(r.Context(), logger, infoPayload.Id)
+		created, err := userStore.RecordLogIn(r.Context(), logger, infoPayload.Id)
 		if err != nil {
 			logger.Error("Failed to record log in.", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// TODO: Only finish registration for new users
-		http.Redirect(w, r, "/auth/complete-registration", http.StatusSeeOther)
+		if err := session.Create(r.Context(), w, infoPayload.Id); err != nil {
+			logger.Error("Failed to create session.", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if created {
+			http.Redirect(w, r, "/auth/complete-registration", http.StatusSeeOther)
+			return
+		}
+
+		next, err := url.QueryUnescape(state.Get("next"))
+		if err != nil {
+			logger.Warn("Malformed next URL.", "url", state.Get("next"))
+			next = "/"
+		}
+
+		if next == "" {
+			next = "/"
+		}
+
+		logger.Debug("Redirecting completed OAuth callback.", "next", next)
+
+		http.Redirect(w, r, next, http.StatusSeeOther)
 	})
 }
 

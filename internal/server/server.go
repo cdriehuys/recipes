@@ -36,6 +36,7 @@ func NewServer(
 	templates TemplateWriter,
 	oauthConfig routes.OAuthConfig,
 	recipeStore routes.RecipeStore,
+	sessionStore routes.SessionStore,
 	userStore routes.UserStore,
 	staticServer http.Handler,
 ) http.Handler {
@@ -49,7 +50,7 @@ func NewServer(
 	}
 
 	handler := http.NewServeMux()
-	routes.AddRoutes(handler, logger, oauthConfig, recipeStore, userStore, webTemplates)
+	routes.AddRoutes(handler, logger, oauthConfig, recipeStore, sessionStore, userStore, webTemplates)
 
 	handler.Handle("/static/", http.StripPrefix("/static/", staticServer))
 

@@ -7,8 +7,8 @@ build-css:
     tailwindcss -i static-src/input.css -o static/style.css --minify
 
 # Run application tests
-test:
-    go test ./...
+test *OPTS='':
+    go test {{OPTS}} ./...
 
 # Remove all generated artifacts
 clean:
@@ -43,3 +43,7 @@ _tern +ARGS:
     set -eufo pipefail
     cd {{migration_dir}}
     tern {{ARGS}}
+
+# Generate a secure secret key.
+generate-secret *ARGS='':
+    @go run cmd/generate-secret/main.go {{ARGS}}

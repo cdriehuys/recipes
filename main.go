@@ -42,11 +42,21 @@ func serveHTTP(
 	config *config.Config,
 	oauthConfig routes.OAuthConfig,
 	recipeStore routes.RecipeStore,
+	sessionStore routes.SessionStore,
 	userStore routes.UserStore,
 	templateEngine server.TemplateWriter,
 	staticServer http.Handler,
 ) error {
-	svr := server.NewServer(logger, config, templateEngine, oauthConfig, recipeStore, userStore, staticServer)
+	svr := server.NewServer(
+		logger,
+		config,
+		templateEngine,
+		oauthConfig,
+		recipeStore,
+		sessionStore,
+		userStore,
+		staticServer,
+	)
 	httpServer := http.Server{
 		Addr:              config.BindAddr,
 		Handler:           svr,
@@ -99,7 +109,10 @@ func run(ctx context.Context, logOutput io.Writer) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	config := config.FromEnvironment()
+	config, err := config.FromEnvironment()
+	if err != nil {
+		return fmt.Errorf("failed to build config: %w", err)
+	}
 
 	logOpts := slog.HandlerOptions{
 		Level: slog.LevelDebug,
@@ -124,6 +137,13 @@ func run(ctx context.Context, logOutput io.Writer) error {
 
 	recipeStore := stores.NewRecipeStore(dbpool)
 	userStore := stores.NewUserStore(dbpool)
+
+	sessionStore := stores.NewCookieSessionStore(stores.CookieSessionOptions{
+		HashKey:       config.SecretKey,
+		EncryptionKey: config.EncryptionKey,
+		Secure:        false,
+		Duration:      7 * 24 * time.Hour,
+	})
 
 	var staticServer staticServer
 	if config.DevMode {
@@ -166,6 +186,7 @@ func run(ctx context.Context, logOutput io.Writer) error {
 		&config,
 		&oauthConfig,
 		recipeStore,
+		&sessionStore,
 		userStore,
 		templateEngine,
 		staticServer,

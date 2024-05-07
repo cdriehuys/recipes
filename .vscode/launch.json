@@ -13,7 +13,9 @@
             "env": {
                 "DEV_MODE": "true",
                 "OAUTH_CALLBACK_URL": "http://localhost:8000/auth/callback",
-                "SECRET_KEY": "test",
+                // Base 64 encoded representation of 32 empty bytes
+                "SECRET_KEY": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                "ENCRYPTION_KEY": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
             },
             "envFile": "${workspaceFolder}/.env",
         }
