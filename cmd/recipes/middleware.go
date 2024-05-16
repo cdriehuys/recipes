@@ -6,7 +6,21 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+
+	"github.com/justinas/nosurf"
 )
+
+// noSurf provides CSRF protection for "unsafe" requests.
+func noSurf(next http.Handler) http.Handler {
+	csrfHandler := nosurf.New(next)
+	csrfHandler.SetBaseCookie(http.Cookie{
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   true,
+	})
+
+	return csrfHandler
+}
 
 // requestLogger is a middleware function that logs the request method and URI.
 func (app *application) requestLogger(next http.Handler) http.Handler {

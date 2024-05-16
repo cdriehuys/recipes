@@ -16,7 +16,7 @@ func (app *application) routes() http.Handler {
 		standard.Then(http.StripPrefix("/static/", app.staticServer)),
 	)
 
-	dynamic := standard.Append(app.sessionManager.LoadAndSave, app.authenticate)
+	dynamic := standard.Append(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
 
 	mux.Handle("GET /{$}", dynamic.ThenFunc(app.index))
 	mux.Handle("GET /auth/callback", dynamic.ThenFunc(app.oauthCallback))
