@@ -13,10 +13,7 @@
             "cwd": "${workspaceFolder}",
             "env": {
                 "DEV_MODE": "true",
-                "OAUTH_CALLBACK_URL": "http://localhost:8000/auth/callback",
-                // Base 64 encoded representation of 32 empty bytes
-                "SECRET_KEY": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-                "ENCRYPTION_KEY": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                "OAUTH_CALLBACK_URL": "http://localhost:8000/auth/callback"
             },
             "envFile": "${workspaceFolder}/.env",
         }

@@ -1,10 +1,7 @@
 package config
 
 import (
-	"encoding/base64"
-	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -27,9 +24,6 @@ type Config struct {
 	GoogleClientSecret string
 
 	OAuthCallbackURL string
-
-	SecretKey     []byte
-	EncryptionKey []byte
 }
 
 type DatabaseConfig struct {
@@ -86,27 +80,7 @@ func init() {
 	viper.BindEnv("encryption-key", "ENCRYPTION_KEY")
 }
 
-func _decodeSecret(encoded string) ([]byte, error) {
-	key, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		msg := strings.ReplaceAll(err.Error(), encoded, "********")
-		return nil, fmt.Errorf("failed to decode key: %s", msg)
-	}
-
-	return key, nil
-}
-
 func FromEnvironment() (Config, error) {
-	secretKey, err := _decodeSecret(viper.GetString("secret-key"))
-	if err != nil {
-		return Config{}, fmt.Errorf("failed to decode secret key: %w", err)
-	}
-
-	encryptionKey, err := _decodeSecret(viper.GetString("encryption-key"))
-	if err != nil {
-		return Config{}, fmt.Errorf("failed to decode encryption key: %w", err)
-	}
-
 	config := Config{
 		BindAddr: viper.GetString("bind-address"),
 		Database: DatabaseConfig{
@@ -120,8 +94,6 @@ func FromEnvironment() (Config, error) {
 		GoogleClientID:     viper.GetString("google-client-id"),
 		GoogleClientSecret: viper.GetString("google-client-secret"),
 		OAuthCallbackURL:   viper.GetString("oauth-callback-url"),
-		SecretKey:          secretKey,
-		EncryptionKey:      encryptionKey,
 	}
 
 	return config, nil

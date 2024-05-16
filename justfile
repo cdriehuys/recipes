@@ -52,7 +52,3 @@ _tern +ARGS:
     set -eufo pipefail
     cd {{migration_dir}}
     tern {{ARGS}}
-
-# Generate a secure secret key.
-generate-secret *ARGS='':
-    @go run cmd/generate-secret/main.go {{ARGS}}
