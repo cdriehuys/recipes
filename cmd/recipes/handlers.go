@@ -14,7 +14,7 @@ import (
 const oauthStateCookie = "recipes.state"
 
 func (app *application) index(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, http.StatusOK, "index", nil)
+	app.render(w, r, http.StatusOK, "index", app.newTemplateData(r))
 }
 
 func _oauthNonce(r *http.Request) (string, error) {
@@ -252,7 +252,9 @@ func (app *application) listRecipes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := map[string]any{"recipes": recipes}
+	data := app.newTemplateData(r)
+	data.Recipes = recipes
+
 	app.render(w, r, http.StatusOK, "recipe-list", data)
 }
 
@@ -273,6 +275,8 @@ func (app *application) getRecipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := map[string]any{"recipe": recipe}
+	data := app.newTemplateData(r)
+	data.Recipe = recipe
+
 	app.render(w, r, http.StatusOK, "recipe", data)
 }

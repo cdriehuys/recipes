@@ -33,12 +33,6 @@ type recipeStore interface {
 	List(context.Context, *slog.Logger, string) ([]stores.RecipeListItem, error)
 }
 
-type sessionStore interface {
-	Create(context.Context, http.ResponseWriter, string) error
-	IsAuthenticated(*http.Request) bool
-	UserID(*http.Request) (string, error)
-}
-
 type userStore interface {
 	Exists(context.Context, string) (bool, error)
 	RecordLogIn(context.Context, *slog.Logger, string) (bool, error)
@@ -46,7 +40,7 @@ type userStore interface {
 }
 
 type templateWriter interface {
-	Write(io.Writer, *http.Request, string, map[string]any) error
+	Write(io.Writer, *http.Request, string, any) error
 }
 
 type staticServer interface {
@@ -59,7 +53,6 @@ type application struct {
 	config         config.Config
 	oauthConfig    oauthConfig
 	recipeStore    recipeStore
-	sessionStore   sessionStore
 	userStore      userStore
 	templates      templateWriter
 	sessionManager *scs.SessionManager
@@ -136,7 +129,6 @@ func newApplication(
 		config:         config,
 		oauthConfig:    &oauthConfig,
 		recipeStore:    recipeStore,
-		sessionStore:   nil,
 		userStore:      userStore,
 		templates:      templateEngine,
 		sessionManager: sessionManager,

@@ -32,7 +32,7 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 }
 
 // render executes a template and writes it as the response.
-func (app *application) render(w http.ResponseWriter, r *http.Request, status int, page string, data map[string]any) {
+func (app *application) render(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
 	buf := new(bytes.Buffer)
 	err := app.templates.Write(buf, r, page, data)
 	if err != nil {
