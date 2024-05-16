@@ -17,6 +17,15 @@ func NewUserStore(db *pgxpool.Pool) UserStore {
 	return UserStore{db}
 }
 
+func (s UserStore) Exists(ctx context.Context, id string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM "users" WHERE id = $1)`
+
+	var exists bool
+	err := s.db.QueryRow(ctx, query, id).Scan(&exists)
+
+	return exists, err
+}
+
 // Record the log in for a user. Returns a boolean indicating if the user needs to complete their
 // registration as well as any error that occurred.
 func (s UserStore) RecordLogIn(ctx context.Context, logger *slog.Logger, id string) (bool, error) {

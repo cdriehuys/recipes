@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"net/http"
 	"path"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,7 @@ type FSTemplateEngine struct {
 	templates map[string]*template.Template
 }
 
-func (e *FSTemplateEngine) Write(w io.Writer, name string, data map[string]any) error {
+func (e *FSTemplateEngine) Write(w io.Writer, _ *http.Request, name string, data map[string]any) error {
 	tpl, ok := e.templates[name]
 	if !ok {
 		return fmt.Errorf("no template named '%s'", name)

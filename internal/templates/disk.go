@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"log/slog"
+	"net/http"
 	"path"
 	"path/filepath"
 )
@@ -18,7 +19,7 @@ type DiskTemplateEngine struct {
 	Logger *slog.Logger
 }
 
-func (e *DiskTemplateEngine) Write(w io.Writer, name string, data map[string]any) error {
+func (e *DiskTemplateEngine) Write(w io.Writer, _ *http.Request, name string, data map[string]any) error {
 	includes, err := filepath.Glob(path.Join(e.IncludePath, "*.html.tmpl"))
 	if err != nil {
 		return fmt.Errorf("could not find includes: %w", err)
