@@ -28,9 +28,9 @@ type oauthConfig interface {
 }
 
 type recipeStore interface {
-	Add(context.Context, *slog.Logger, domain.NewRecipe) error
+	Add(context.Context, *slog.Logger, stores.Recipe) error
 	GetByID(context.Context, *slog.Logger, string, uuid.UUID) (stores.Recipe, error)
-	List(context.Context, *slog.Logger, string) ([]stores.RecipeListItem, error)
+	List(context.Context, *slog.Logger, string) ([]stores.Recipe, error)
 }
 
 type userStore interface {

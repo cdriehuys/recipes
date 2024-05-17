@@ -14,7 +14,7 @@ type templateData struct {
 	Form any
 
 	Recipe  stores.Recipe
-	Recipes []stores.RecipeListItem
+	Recipes []stores.Recipe
 }
 
 func (app *application) newTemplateData(r *http.Request) templateData {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cdriehuys/recipes/internal/domain"
+	"github.com/cdriehuys/recipes/internal/stores"
 	"github.com/cdriehuys/recipes/internal/validation"
 	"github.com/google/uuid"
 )
@@ -206,16 +207,6 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (app *application) renderRecipeForm(w http.ResponseWriter, r *http.Request, formData, problems map[string]string) {
-	data := app.newTemplateData(r)
-	data.Form = map[string]any{
-		"formData": formData,
-		"problems": problems,
-	}
-
-	app.render(w, r, http.StatusOK, "add-recipe", data)
-}
-
 type recipeForm struct {
 	Title        string
 	Instructions string
@@ -250,8 +241,8 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipe := domain.NewRecipe{
-		Id:           uuid.New(),
+	recipe := stores.Recipe{
+		ID:           uuid.New(),
 		Owner:        userID,
 		Title:        form.Title,
 		Instructions: form.Instructions,
@@ -262,7 +253,7 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipePath, err := url.JoinPath("/recipes", recipe.Id.String())
+	recipePath, err := url.JoinPath("/recipes", recipe.ID.String())
 	if err != nil {
 		app.serverError(w, r, fmt.Errorf("failed to build redirect path: %w", err))
 		return
