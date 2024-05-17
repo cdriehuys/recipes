@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cdriehuys/recipes/internal/domain"
+	"github.com/cdriehuys/recipes/internal/validation"
 	"github.com/google/uuid"
 )
 
@@ -215,28 +216,45 @@ func (app *application) renderRecipeForm(w http.ResponseWriter, r *http.Request,
 	app.render(w, r, http.StatusOK, "add-recipe", data)
 }
 
+type recipeForm struct {
+	Title        string
+	Instructions string
+	validation.Validator
+}
+
 func (app *application) addRecipe(w http.ResponseWriter, r *http.Request) {
-	app.renderRecipeForm(w, r, nil, nil)
+	data := app.newTemplateData(r)
+	data.Form = recipeForm{}
+
+	app.render(w, r, http.StatusOK, "add-recipe", data)
 }
 
 func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
 
+	form := recipeForm{
+		Title:        r.PostFormValue("title"),
+		Instructions: r.PostFormValue("instructions"),
+	}
+
+	form.CheckField(validation.NotBlank(form.Title), "title", "This field is required.")
+	form.CheckField(validation.NotBlank(form.Instructions), "instructions", "This field is required.")
+
+	if !form.IsValid() {
+		app.logger.Debug("New recipe form did not validate.")
+
+		data := app.newTemplateData(r)
+		data.Form = form
+
+		app.render(w, r, http.StatusOK, "add-recipe", data)
+		return
+	}
+
 	recipe := domain.NewRecipe{
 		Id:           uuid.New(),
 		Owner:        userID,
-		Title:        r.FormValue("title"),
-		Instructions: r.FormValue("instructions"),
-	}
-
-	if problems := recipe.Validate(); len(problems) != 0 {
-		app.logger.Debug("New recipe form did not validate.", "errors", problems)
-		formData := map[string]string{
-			"title":        recipe.Title,
-			"instructions": recipe.Instructions,
-		}
-		app.renderRecipeForm(w, r, formData, problems)
-		return
+		Title:        form.Title,
+		Instructions: form.Instructions,
 	}
 
 	if err := app.recipeStore.Add(r.Context(), app.logger, recipe); err != nil {

@@ -44,13 +44,14 @@ VALUES ($1, $2, $3, $4)`
 type Recipe struct {
 	Title        string
 	Instructions string
+	CreatedAt    time.Time
 }
 
 func (s RecipeStore) GetByID(ctx context.Context, logger *slog.Logger, owner string, id uuid.UUID) (Recipe, error) {
-	query := `SELECT title, instructions FROM recipes WHERE owner = $1 AND id = $2`
+	query := `SELECT title, instructions, created_at FROM recipes WHERE owner = $1 AND id = $2`
 
 	var recipe Recipe
-	err := s.db.QueryRow(ctx, query, owner, id).Scan(&recipe.Title, &recipe.Instructions)
+	err := s.db.QueryRow(ctx, query, owner, id).Scan(&recipe.Title, &recipe.Instructions, &recipe.CreatedAt)
 	if err != nil {
 		return Recipe{}, fmt.Errorf("failed to query for recipe with ID %s: %w", id, err)
 	}

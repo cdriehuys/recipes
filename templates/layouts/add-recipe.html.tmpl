@@ -1,17 +1,17 @@
 {{ define "content" -}}
 <section class="max-w-4xl mx-auto px-2">
   <h1 class="mb-8 text-3xl">New Recipe</h1>
-  {{ if .Form.problems -}}<p class="mb-4 pl-2 border-l-2 border-l-red-700 lg:mb-6">Please correct the following problems.</p>{{- end }}
+  {{ if formInvalid .Form -}}<p class="mb-4 pl-2 border-l-2 border-l-red-700 lg:mb-6">Please correct the following problems.</p>{{- end }}
   <form method="POST">
     <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
     <div class="mb-4 lg:mb-6">
-      {{ template "form-field" formField "title" "recipe-title" "Title" .Form.formData.title .Form.problems.title }}
+      {{ template "form-field" formField "title" "recipe-title" "Title" .Form.Title .Form.FieldErrors.title }}
     </div>
     <div class="mb-4 lg:mb-6">
       <label class="block mb-1 text-xl after:content-['*'] after:text-red-700" for="recipe-instructions">Instructions</label>
-      <textarea class="block w-full p-1 border border-slate-600" name="instructions" rows="10" required>{{ .Form.formData.instructions }}</textarea>
-      {{- if .Form.problems.instructions }}
-      <p class="mt-2 pl-2 border-l-2 border-l-red-700">{{ .Form.problems.instructions }}</p>
+      <textarea class="block w-full p-1 border border-slate-600" name="instructions" rows="10" required>{{ .Form.Instructions }}</textarea>
+      {{- if .Form.FieldErrors.instructions }}
+      <p class="mt-2 pl-2 border-l-2 border-l-red-700">{{ .Form.FieldErrors.instructions }}</p>
       {{- end }}
     </div>
     <button class="text-xl italic uppercase border-b-2 border-b-slate-600 transition-all hover:border-b-lime-700 hover:after:content['→']" type="submit">Submit</button>
