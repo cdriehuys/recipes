@@ -12,9 +12,17 @@
       <nav>
         <ul class="flex justify-between">
           <li><a class="underline" href="/">Home</a></li>
+          {{ if .IsAuthenticated -}}
           <li><a class="underline" href="/recipes">All Recipes</a></li>
           <li><a class="underline" href="/new-recipe">New Recipe</a></li>
+          <li>
+            <form method="POST" action="/auth/logout">
+              <input type="hidden" name="csrf_token" value='{{.CSRFToken}}'>
+              <button class="underline">Log Out</button>
+            </form>
+          {{ else -}}
           <li><a class="underline" href="/auth/login">Log In</a></li>
+          {{- end }}
         </ul>
       </nav>
     </header>

@@ -5,11 +5,7 @@
   <form method="POST">
     {{ .csrfField }}
     <div class="mb-4 lg:mb-6">
-      <label class="block mb-1 text-xl after:content-['*'] after:text-red-700" for="name">Name</label>
-      <input class="block w-full p-1 border border-slate-600" id="name" name="name" required value="{{ .formData.name }}">
-      {{- if .problems.name }}
-      <p class="mt-2 pl-2 border-l-2 border-l-red-700">{{ .problems.name }}</p>
-      {{- end }}
+      {{ template "form-field" formField "name" "name" "Name" .formData.name .problems.name }}
     </div>
     <button class="text-xl italic uppercase border-b-2 border-b-slate-600 transition-all hover:border-b-lime-700 hover:after:content['→']" type="submit">Submit</button>
   </form>

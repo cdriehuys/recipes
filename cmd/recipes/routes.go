@@ -26,6 +26,7 @@ func (app *application) routes() http.Handler {
 
 	mux.Handle("GET /auth/complete-registration", requiresAuth.ThenFunc(app.completeRegistration))
 	mux.Handle("POST /auth/complete-registration", requiresAuth.ThenFunc(app.completeRegistrationPost))
+	mux.Handle("POST /auth/logout", requiresAuth.ThenFunc(app.logout))
 	mux.Handle("GET /new-recipe", requiresAuth.ThenFunc(app.addRecipe))
 	mux.Handle("POST /new-recipe", requiresAuth.ThenFunc(app.addRecipePost))
 	mux.Handle("GET /recipes", requiresAuth.ThenFunc(app.listRecipes))
