@@ -1,11 +1,23 @@
-{{ define "content" -}}
-<h1>Recipes</h1>
+{{ define "title" }}My Recipes{{ end }}
+
+{{ define "content" }}{{ template "app-page" . }}{{ end }}
+
+{{ define "app-content" }}
+<h1 class="mb-6 text-3xl lg:text-4xl">Recipes</h1>
 {{- if .Recipes }}
 <ul>
 {{- range .Recipes }}
-  <li><a href="/recipes/{{ .Id }}">{{ .Title }}</a></li>
-</ul>
+  <li class="mb-4">
+    <a
+      class="block p-2 shadow-md transition-colors hover:bg-slate-50"
+      href="/recipes/{{ .Id }}"
+    >
+      <h2 class="mb-2 text-lg font-bold">{{ .Title }}</h2>
+      <p class="text-slate-600">Added on {{ .CreatedAt.Format "1/2/2006" }}</p>
+    </a>
+  </li>
 {{- end }}
+</ul>
 {{- else }}
 <h2>No Recipes!</h2>
 {{- end }}

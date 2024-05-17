@@ -205,19 +205,18 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func renderRecipeForm(w http.ResponseWriter, r *http.Request, templates templateWriter, formData, problems map[string]string) error {
-	data := map[string]any{
+func (app *application) renderRecipeForm(w http.ResponseWriter, r *http.Request, formData, problems map[string]string) {
+	data := app.newTemplateData(r)
+	data.Form = map[string]any{
 		"formData": formData,
 		"problems": problems,
 	}
 
-	return templates.Write(w, r, "add-recipe", data)
+	app.render(w, r, http.StatusOK, "add-recipe", data)
 }
 
 func (app *application) addRecipe(w http.ResponseWriter, r *http.Request) {
-	if err := renderRecipeForm(w, r, app.templates, nil, nil); err != nil {
-		app.logger.Error("Failed to execute template.", "error", err)
-	}
+	app.renderRecipeForm(w, r, nil, nil)
 }
 
 func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +235,7 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 			"title":        recipe.Title,
 			"instructions": recipe.Instructions,
 		}
-		renderRecipeForm(w, r, app.templates, formData, problems)
+		app.renderRecipeForm(w, r, formData, problems)
 		return
 	}
 

@@ -4,6 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ block "title" . }}Recipes{{ end }}</title>
     <link rel="stylesheet" href='{{ staticURL "style.css" }}'>
   </head>
 
@@ -13,7 +14,7 @@
         <ul class="flex justify-between">
           <li><a class="underline" href="/">Home</a></li>
           {{ if .IsAuthenticated -}}
-          <li><a class="underline" href="/recipes">All Recipes</a></li>
+          <li><a class="underline" href="/recipes">My Recipes</a></li>
           <li><a class="underline" href="/new-recipe">New Recipe</a></li>
           <li>
             <form method="POST" action="/auth/logout">

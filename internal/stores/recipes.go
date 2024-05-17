@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/cdriehuys/recipes/internal/domain"
 	"github.com/google/uuid"
@@ -58,12 +59,13 @@ func (s RecipeStore) GetByID(ctx context.Context, logger *slog.Logger, owner str
 }
 
 type RecipeListItem struct {
-	Id    uuid.UUID
-	Title string
+	Id        uuid.UUID
+	Title     string
+	CreatedAt time.Time
 }
 
 func (s RecipeStore) List(ctx context.Context, logger *slog.Logger, owner string) ([]RecipeListItem, error) {
-	query := `SELECT id, title FROM recipes WHERE owner = $1 LIMIT 100`
+	query := `SELECT id, title, created_at FROM recipes WHERE owner = $1 LIMIT 100`
 	rows, err := s.db.Query(ctx, query, owner)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list recipes: %w", err)

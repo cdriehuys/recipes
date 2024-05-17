@@ -11,6 +11,8 @@ type templateData struct {
 	CSRFToken       string
 	IsAuthenticated bool
 
+	Form any
+
 	Recipe  stores.Recipe
 	Recipes []stores.RecipeListItem
 }
