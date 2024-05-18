@@ -69,7 +69,7 @@ func (s RecipeStore) GetByID(ctx context.Context, logger *slog.Logger, owner str
 
 func (s RecipeStore) List(ctx context.Context, logger *slog.Logger, owner string) ([]Recipe, error) {
 	query := `SELECT id, owner, title, instructions, created_at, updated_at
-		FROM recipes WHERE owner = $1 LIMIT 100`
+		FROM recipes WHERE owner = $1 ORDER BY title LIMIT 100`
 	rows, err := s.db.Query(ctx, query, owner)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list recipes: %w", err)
