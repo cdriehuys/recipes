@@ -132,19 +132,21 @@ func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, next, http.StatusSeeOther)
 }
 
-func renderRegistrationForm(w http.ResponseWriter, r *http.Request, templates templateWriter, formData, problems map[string]string) error {
-	data := map[string]any{
-		"formData": formData,
-		"problems": problems,
-	}
+type registrationForm struct {
+	Name string
+	validation.Validator
+}
 
-	return templates.Write(w, r, "complete-registration", data)
+func (form *registrationForm) Validate() {
+	form.CheckField(validation.NotBlank(form.Name), "name", "This field may not be blank.")
+	form.CheckField(validation.MaxLength(form.Name, 50), "name", "This field may not contain more than 50 characters.")
 }
 
 func (app *application) completeRegistration(w http.ResponseWriter, r *http.Request) {
-	if err := renderRegistrationForm(w, r, app.templates, nil, nil); err != nil {
-		app.logger.Error("Failed to execute template.", "error", err)
-	}
+	data := app.newTemplateData(r)
+	data.Form = &registrationForm{}
+
+	app.render(w, r, http.StatusOK, "complete-registration", data)
 }
 
 func (app *application) completeRegistrationPost(w http.ResponseWriter, r *http.Request) {
@@ -155,15 +157,21 @@ func (app *application) completeRegistrationPost(w http.ResponseWriter, r *http.
 		return
 	}
 
-	userInfo := domain.UserDetails{
-		Name: r.FormValue("name"),
+	form := registrationForm{
+		Name: r.PostFormValue("name"),
+	}
+	form.Validate()
+
+	if !form.IsValid() {
+		app.logger.Debug("User details failed validation.")
+		data := app.newTemplateData(r)
+		data.Form = &form
+		app.render(w, r, http.StatusOK, "complete-registration", data)
+		return
 	}
 
-	if problems := userInfo.Validate(); len(problems) != 0 {
-		app.logger.Debug("User details failed validation.", "problems", problems)
-		formData := map[string]string{"name": userInfo.Name}
-		renderRegistrationForm(w, r, app.templates, formData, problems)
-		return
+	userInfo := domain.UserDetails{
+		Name: form.Name,
 	}
 
 	if err := app.userStore.UpdateDetails(r.Context(), app.logger, userID, userInfo); err != nil {

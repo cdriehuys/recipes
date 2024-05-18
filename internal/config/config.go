@@ -24,6 +24,8 @@ type Config struct {
 	GoogleClientSecret string
 
 	OAuthCallbackURL string
+
+	RunMigrations bool
 }
 
 type DatabaseConfig struct {
@@ -76,8 +78,7 @@ func init() {
 
 	viper.BindEnv("oauth-callback-url", "OAUTH_CALLBACK_URL")
 
-	viper.BindEnv("secret-key", "SECRET_KEY")
-	viper.BindEnv("encryption-key", "ENCRYPTION_KEY")
+	viper.SetDefault("run-migrations", false)
 }
 
 func FromEnvironment() (Config, error) {
@@ -94,6 +95,7 @@ func FromEnvironment() (Config, error) {
 		GoogleClientID:     viper.GetString("google-client-id"),
 		GoogleClientSecret: viper.GetString("google-client-secret"),
 		OAuthCallbackURL:   viper.GetString("oauth-callback-url"),
+		RunMigrations:      viper.GetBool("run-migrations"),
 	}
 
 	return config, nil

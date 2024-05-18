@@ -16,6 +16,7 @@ import (
 
 	"github.com/cdriehuys/recipes"
 	"github.com/cdriehuys/recipes/internal/config"
+	"github.com/cdriehuys/recipes/migrations"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -76,6 +77,7 @@ func run(
 	ctx context.Context,
 	logStream io.Writer,
 	args []string,
+	migrationFS fs.FS,
 	staticFS fs.FS,
 	templateFS fs.FS,
 ) error {
@@ -93,7 +95,7 @@ func run(
 				return err
 			}
 
-			app, err := newApplication(ctx, logStream, config, staticFS, templateFS)
+			app, err := newApplication(ctx, logStream, config, migrationFS, staticFS, templateFS)
 			if err != nil {
 				return err
 			}
@@ -105,11 +107,8 @@ func run(
 	cmd.Flags().String("address", ":8000", "Address to bind the web server to")
 	viper.BindPFlag("bind-address", cmd.Flags().Lookup("address"))
 
-	cmd.Flags().String("secret-key", "", "Secret key")
-	viper.BindPFlag("secret-key", cmd.Flags().Lookup("secret-key"))
-
-	cmd.Flags().String("encryption-key", "", "Encryption key")
-	viper.BindPFlag("encryption-key", cmd.Flags().Lookup("encryption-key"))
+	cmd.Flags().Bool("migrate", false, "Run database migrations at startup")
+	viper.BindPFlag("run-migrations", cmd.Flags().Lookup("migrate"))
 
 	cmd.SetArgs(args)
 
@@ -121,6 +120,7 @@ func main() {
 		context.Background(),
 		os.Stderr,
 		os.Args[1:],
+		migrations.MigrationsFS,
 		recipes.StaticFS,
 		recipes.TemplateFS,
 	)

@@ -1,4 +1,4 @@
-recipes_bin := justfile_directory() / "cmd/recipes/main.go"
+recipes_bin := justfile_directory() / "cmd/recipes"
 
 # Compile a production-ready application build
 build: build-css

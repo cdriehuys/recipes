@@ -16,7 +16,9 @@ import (
 	"github.com/cdriehuys/recipes/internal/stores"
 	"github.com/cdriehuys/recipes/internal/templates"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/tern/v2/migrate"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -64,6 +66,7 @@ func newApplication(
 	ctx context.Context,
 	logStream io.Writer,
 	config config.Config,
+	migrationFS fs.FS,
 	staticFS fs.FS,
 	templateFS fs.FS,
 ) (*application, error) {
@@ -83,6 +86,19 @@ func newApplication(
 		return nil, fmt.Errorf("unable to create database connection pool: %w", err)
 	}
 	logger.Info("Created database connection pool.")
+
+	if config.RunMigrations {
+		logger.Info("Running database migrations.")
+		runner := func(conn *pgxpool.Conn) error {
+			return runMigrations(ctx, conn.Conn(), migrationFS)
+		}
+
+		if err := dbpool.AcquireFunc(ctx, runner); err != nil {
+			return nil, fmt.Errorf("failed to run migrations: %w", err)
+		}
+
+		logger.Info("Database migration ran successfully.")
+	}
 
 	sessionManager := scs.New()
 	sessionManager.Store = pgxstore.New(dbpool)
@@ -137,4 +153,17 @@ func newApplication(
 	}
 
 	return app, nil
+}
+
+func runMigrations(ctx context.Context, conn *pgx.Conn, migrations fs.FS) error {
+	migrator, err := migrate.NewMigrator(ctx, conn, "public.schema_version")
+	if err != nil {
+		return err
+	}
+
+	if err := migrator.LoadMigrations(migrations); err != nil {
+		return err
+	}
+
+	return migrator.Migrate(ctx)
 }
