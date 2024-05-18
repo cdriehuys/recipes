@@ -31,6 +31,7 @@ type recipeStore interface {
 	Add(context.Context, *slog.Logger, stores.Recipe) error
 	GetByID(context.Context, *slog.Logger, string, uuid.UUID) (stores.Recipe, error)
 	List(context.Context, *slog.Logger, string) ([]stores.Recipe, error)
+	Update(context.Context, stores.Recipe) error
 }
 
 type userStore interface {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -207,15 +208,21 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-type recipeForm struct {
+type RecipeForm struct {
 	Title        string
 	Instructions string
 	validation.Validator
 }
 
+func (form *RecipeForm) Validate() {
+	form.CheckField(validation.NotBlank(form.Title), "title", "This field is required.")
+	form.CheckField(validation.MaxLength(form.Title, 200), "title", "This field may not contain more than 200 characters.")
+	form.CheckField(validation.NotBlank(form.Instructions), "instructions", "This field is required.")
+}
+
 func (app *application) addRecipe(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
-	data.Form = recipeForm{}
+	data.Form = &RecipeForm{}
 
 	app.render(w, r, http.StatusOK, "add-recipe", data)
 }
@@ -223,19 +230,18 @@ func (app *application) addRecipe(w http.ResponseWriter, r *http.Request) {
 func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
 
-	form := recipeForm{
+	form := RecipeForm{
 		Title:        r.PostFormValue("title"),
 		Instructions: r.PostFormValue("instructions"),
 	}
 
-	form.CheckField(validation.NotBlank(form.Title), "title", "This field is required.")
-	form.CheckField(validation.NotBlank(form.Instructions), "instructions", "This field is required.")
+	form.Validate()
 
 	if !form.IsValid() {
 		app.logger.Debug("New recipe form did not validate.")
 
 		data := app.newTemplateData(r)
-		data.Form = form
+		data.Form = &form
 
 		app.render(w, r, http.StatusOK, "add-recipe", data)
 		return
@@ -298,4 +304,80 @@ func (app *application) getRecipe(w http.ResponseWriter, r *http.Request) {
 	data.Recipe = recipe
 
 	app.render(w, r, http.StatusOK, "recipe", data)
+}
+
+func (app *application) editRecipe(w http.ResponseWriter, r *http.Request) {
+	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+
+	rawID := r.PathValue("recipeID")
+	id, err := uuid.Parse(rawID)
+	if err != nil {
+		app.logger.Debug("Received invalid recipe ID", "id", rawID, "error", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	recipe, err := app.recipeStore.GetByID(r.Context(), app.logger, userID, id)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	form := RecipeForm{
+		Title:        recipe.Title,
+		Instructions: recipe.Instructions,
+	}
+
+	data := app.newTemplateData(r)
+	data.Form = &form
+
+	app.render(w, r, http.StatusOK, "edit-recipe", data)
+}
+
+func (app *application) editRecipePost(w http.ResponseWriter, r *http.Request) {
+	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+
+	rawID := r.PathValue("recipeID")
+	id, err := uuid.Parse(rawID)
+	if err != nil {
+		app.logger.Debug("Received invalid recipe ID", "id", rawID, "error", err)
+		app.clientError(w, http.StatusNotFound)
+		return
+	}
+
+	form := RecipeForm{
+		Title:        r.PostFormValue("title"),
+		Instructions: r.PostFormValue("instructions"),
+	}
+	form.Validate()
+
+	if !form.IsValid() {
+		data := app.newTemplateData(r)
+		data.Form = &form
+		app.render(w, r, http.StatusOK, "edit-recipe", data)
+		return
+	}
+
+	recipe := stores.Recipe{
+		ID:           id,
+		Owner:        userID,
+		Title:        form.Title,
+		Instructions: form.Instructions,
+	}
+	if err := app.recipeStore.Update(r.Context(), recipe); err != nil {
+		if errors.Is(err, stores.ErrNotFound) {
+			app.clientError(w, http.StatusNotFound)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	recipeURL, err := url.JoinPath("/recipes", id.String())
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	http.Redirect(w, r, recipeURL, http.StatusSeeOther)
 }

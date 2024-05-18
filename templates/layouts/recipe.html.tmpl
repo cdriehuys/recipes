@@ -3,7 +3,10 @@
 {{ define "content" }}{{ template "app-page" . }}{{ end }}
 
 {{ define "app-content" }}
-<h1 class="mb-6 text-3xl lg:text-4xl">{{ .Recipe.Title }}</h1>
+<div class="block mb-4 items-center lg:flex">
+  <h1 class="mb-6 text-3xl lg:text-4xl lg:flex-grow">{{ .Recipe.Title }}</h1>
+  <a class="text-xl underline" href='{{ .Recipe.EditURL }}'>Edit</a>
+</div>
 <pre class="mb-4 text-wrap">{{ .Recipe.Instructions }}</pre>
 <hr class="mb-2">
 <p class="text-slate-600">

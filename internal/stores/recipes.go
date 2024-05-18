@@ -20,6 +20,10 @@ type Recipe struct {
 	UpdatedAt    time.Time
 }
 
+func (r Recipe) EditURL() string {
+	return "/recipes/" + r.ID.String() + "/edit"
+}
+
 type RecipeStore struct {
 	db *pgxpool.Pool
 }
@@ -80,4 +84,27 @@ func (s RecipeStore) List(ctx context.Context, logger *slog.Logger, owner string
 	logger.Debug("Retrieved recipe list from database.", "recipes", recipes)
 
 	return recipes, nil
+}
+
+func (s RecipeStore) Update(ctx context.Context, recipe Recipe) error {
+	query := `UPDATE recipes
+		SET title = $3, instructions = $4
+		WHERE owner = $1 AND id = $2`
+	result, err := s.db.Exec(
+		ctx,
+		query,
+		recipe.Owner,
+		recipe.ID,
+		recipe.Title,
+		recipe.Instructions,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update recipe: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }

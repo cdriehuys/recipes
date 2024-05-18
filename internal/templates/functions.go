@@ -1,16 +1,13 @@
 package templates
 
-import "github.com/cdriehuys/recipes/internal/validation"
-
 type StaticFileFinder interface {
 	FileURL(string) string
 }
 
 func CustomFunctionMap(staticFiles StaticFileFinder) map[string]any {
 	return map[string]any{
-		"formField":   formField,
-		"formInvalid": formInvalid,
-		"staticURL":   staticFiles.FileURL,
+		"formField": formField,
+		"staticURL": staticFiles.FileURL,
 	}
 }
 
@@ -36,13 +33,4 @@ func formField(name, id, label, value, err any) FormField {
 		Value: asString(value),
 		Error: asString(err),
 	}
-}
-
-func formInvalid(form any) bool {
-	validatable, ok := form.(validation.Validator)
-	if !ok {
-		return false
-	}
-
-	return !validatable.IsValid()
 }

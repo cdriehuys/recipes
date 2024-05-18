@@ -7,11 +7,15 @@ import (
 	"github.com/justinas/nosurf"
 )
 
+type form interface {
+	IsValid() bool
+}
+
 type templateData struct {
 	CSRFToken       string
 	IsAuthenticated bool
 
-	Form any
+	Form form
 
 	Recipe  stores.Recipe
 	Recipes []stores.Recipe
