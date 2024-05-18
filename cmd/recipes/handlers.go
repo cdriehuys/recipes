@@ -8,8 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/cdriehuys/recipes/internal/domain"
-	"github.com/cdriehuys/recipes/internal/stores"
+	"github.com/cdriehuys/recipes/internal/models"
 	"github.com/cdriehuys/recipes/internal/validation"
 	"github.com/google/uuid"
 )
@@ -101,7 +100,7 @@ func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	created, err := app.userStore.RecordLogIn(r.Context(), app.logger, infoPayload.Id)
+	created, err := app.userModel.RecordLogIn(r.Context(), infoPayload.Id)
 	if err != nil {
 		app.logger.Error("Failed to record log in.", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -174,11 +173,7 @@ func (app *application) completeRegistrationPost(w http.ResponseWriter, r *http.
 		return
 	}
 
-	userInfo := domain.UserDetails{
-		Name: form.Name,
-	}
-
-	if err := app.userStore.UpdateDetails(r.Context(), app.logger, userID, userInfo); err != nil {
+	if err := app.userModel.UpdateName(r.Context(), userID, form.Name); err != nil {
 		app.serverError(w, r, err)
 		return
 	}
@@ -259,14 +254,14 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipe := stores.Recipe{
+	recipe := models.Recipe{
 		ID:           uuid.New(),
 		Owner:        userID,
 		Title:        form.Title,
 		Instructions: form.Instructions,
 	}
 
-	if err := app.recipeStore.Add(r.Context(), app.logger, recipe); err != nil {
+	if err := app.recipeModel.Add(r.Context(), recipe); err != nil {
 		app.serverError(w, r, err)
 		return
 	}
@@ -283,7 +278,7 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 func (app *application) listRecipes(w http.ResponseWriter, r *http.Request) {
 	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
 
-	recipes, err := app.recipeStore.List(r.Context(), app.logger, userID)
+	recipes, err := app.recipeModel.List(r.Context(), userID)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -306,7 +301,7 @@ func (app *application) getRecipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipe, err := app.recipeStore.GetByID(r.Context(), app.logger, userID, id)
+	recipe, err := app.recipeModel.GetByID(r.Context(), userID, id)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -329,7 +324,7 @@ func (app *application) editRecipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipe, err := app.recipeStore.GetByID(r.Context(), app.logger, userID, id)
+	recipe, err := app.recipeModel.GetByID(r.Context(), userID, id)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -370,14 +365,14 @@ func (app *application) editRecipePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipe := stores.Recipe{
+	recipe := models.Recipe{
 		ID:           id,
 		Owner:        userID,
 		Title:        form.Title,
 		Instructions: form.Instructions,
 	}
-	if err := app.recipeStore.Update(r.Context(), recipe); err != nil {
-		if errors.Is(err, stores.ErrNotFound) {
+	if err := app.recipeModel.Update(r.Context(), recipe); err != nil {
+		if errors.Is(err, models.ErrNotFound) {
 			app.clientError(w, http.StatusNotFound)
 		} else {
 			app.serverError(w, r, err)

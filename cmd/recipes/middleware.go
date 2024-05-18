@@ -64,7 +64,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 		// Otherwise, we check to see if a user with that ID exists in our
 		// database.
-		exists, err := app.userStore.Exists(r.Context(), id)
+		exists, err := app.userModel.Exists(r.Context(), id)
 		if err != nil {
 			app.serverError(w, r, err)
 			return

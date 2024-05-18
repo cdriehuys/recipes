@@ -11,9 +11,8 @@ import (
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/cdriehuys/recipes/internal/config"
-	"github.com/cdriehuys/recipes/internal/domain"
+	"github.com/cdriehuys/recipes/internal/models"
 	"github.com/cdriehuys/recipes/internal/staticfiles"
-	"github.com/cdriehuys/recipes/internal/stores"
 	"github.com/cdriehuys/recipes/internal/templates"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -29,17 +28,17 @@ type oauthConfig interface {
 	Exchange(context.Context, string, ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 }
 
-type recipeStore interface {
-	Add(context.Context, *slog.Logger, stores.Recipe) error
-	GetByID(context.Context, *slog.Logger, string, uuid.UUID) (stores.Recipe, error)
-	List(context.Context, *slog.Logger, string) ([]stores.Recipe, error)
-	Update(context.Context, stores.Recipe) error
+type recipeModel interface {
+	Add(context.Context, models.Recipe) error
+	GetByID(context.Context, string, uuid.UUID) (models.Recipe, error)
+	List(context.Context, string) ([]models.Recipe, error)
+	Update(context.Context, models.Recipe) error
 }
 
-type userStore interface {
+type userModel interface {
 	Exists(context.Context, string) (bool, error)
-	RecordLogIn(context.Context, *slog.Logger, string) (bool, error)
-	UpdateDetails(context.Context, *slog.Logger, string, domain.UserDetails) error
+	RecordLogIn(context.Context, string) (bool, error)
+	UpdateName(context.Context, string, string) error
 }
 
 type templateWriter interface {
@@ -55,8 +54,8 @@ type application struct {
 	logger         *slog.Logger
 	config         config.Config
 	oauthConfig    oauthConfig
-	recipeStore    recipeStore
-	userStore      userStore
+	recipeModel    recipeModel
+	userModel      userModel
 	templates      templateWriter
 	sessionManager *scs.SessionManager
 	staticServer   staticServer
@@ -103,8 +102,8 @@ func newApplication(
 	sessionManager := scs.New()
 	sessionManager.Store = pgxstore.New(dbpool)
 
-	recipeStore := stores.NewRecipeStore(dbpool)
-	userStore := stores.NewUserStore(dbpool)
+	recipeModel := models.RecipeModel{DB: dbpool, Logger: logger}
+	userModel := models.UserModel{DB: dbpool, Logger: logger}
 
 	var staticServer staticServer
 	if config.DevMode {
@@ -145,8 +144,8 @@ func newApplication(
 		logger:         logger,
 		config:         config,
 		oauthConfig:    &oauthConfig,
-		recipeStore:    recipeStore,
-		userStore:      userStore,
+		recipeModel:    &recipeModel,
+		userModel:      &userModel,
 		templates:      templateEngine,
 		sessionManager: sessionManager,
 		staticServer:   staticServer,

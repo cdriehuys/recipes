@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/cdriehuys/recipes/internal/stores"
+	"github.com/cdriehuys/recipes/internal/models"
 	"github.com/justinas/nosurf"
 )
 
@@ -17,8 +17,8 @@ type templateData struct {
 
 	Form form
 
-	Recipe  stores.Recipe
-	Recipes []stores.Recipe
+	Recipe  models.Recipe
+	Recipes []models.Recipe
 }
 
 func (app *application) newTemplateData(r *http.Request) templateData {
