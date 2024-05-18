@@ -6,7 +6,7 @@ build
 static/*
 
 # Test artifacts
-coverage.out
+coverage.*
 
 # Local configuration
 .env
