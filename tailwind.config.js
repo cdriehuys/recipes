@@ -6,6 +6,8 @@ module.exports = {
       "serif": 'Lora, ui-serif, Georgia, Cambria, "Times New Roman", Times, serif'
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }
 

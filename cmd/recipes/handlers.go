@@ -20,6 +20,10 @@ func (app *application) index(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "index", app.newTemplateData(r))
 }
 
+func (app *application) privacyPolicy(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, http.StatusOK, "privacy-policy", app.newTemplateData(r))
+}
+
 func _oauthNonce(r *http.Request) (string, error) {
 	cookie, err := r.Cookie(oauthStateCookie)
 	if err != nil {

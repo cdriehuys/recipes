@@ -21,6 +21,7 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /{$}", dynamic.ThenFunc(app.index))
 	mux.Handle("GET /auth/callback", dynamic.ThenFunc(app.oauthCallback))
 	mux.Handle("GET /auth/login", dynamic.ThenFunc(app.login))
+	mux.Handle("GET /privacy-policy", dynamic.ThenFunc(app.privacyPolicy))
 
 	requiresAuth := dynamic.Append(app.requireAuthentication)
 
