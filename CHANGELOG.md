@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/cdriehuys/recipes/compare/v1.0.0...v1.0.1) (2024-05-19)
+
+
+### Miscellaneous Chores
+
+* release 1.0.1 ([c2fd862](https://github.com/cdriehuys/recipes/commit/c2fd86251ae256d749d299f18bf3fa60377c85df))
+
 ## 1.0.0 (2024-05-19)
 
 
