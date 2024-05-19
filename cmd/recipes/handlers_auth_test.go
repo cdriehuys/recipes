@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -9,15 +10,33 @@ import (
 	"github.com/cdriehuys/recipes/internal/assert"
 )
 
-func getNonceCookie(t *testing.T, cookies []*http.Cookie) *http.Cookie {
-	for _, cookie := range cookies {
-		if cookie.Name == "recipes.state" {
-			return cookie
-		}
+type mockSessionManager struct {
+	puts map[string]any
+}
+
+func (s *mockSessionManager) GetString(context.Context, string) string {
+	return ""
+}
+
+func (s *mockSessionManager) LoadAndSave(next http.Handler) http.Handler {
+	return next
+}
+
+func (s *mockSessionManager) PopString(context.Context, string) string {
+	return ""
+}
+
+func (s *mockSessionManager) Put(_ context.Context, key string, value any) {
+	if s.puts == nil {
+		s.puts = make(map[string]any)
 	}
 
-	t.Fatalf("No cookie named 'recipes.state': %v", cookies)
+	s.puts[key] = value
+}
 
+func (s *mockSessionManager) Remove(context.Context, string) {}
+
+func (s *mockSessionManager) RenewToken(context.Context) error {
 	return nil
 }
 
@@ -41,7 +60,10 @@ func removeNonce(t *testing.T, redirectURL string) string {
 }
 
 func TestAuthLogin(t *testing.T) {
+	sessionManager := mockSessionManager{}
+
 	app := newTestApp(t)
+	app.sessionManager = &sessionManager
 	server := newTestServer(t, app.routes())
 
 	req := httptest.NewRequest(http.MethodGet, "/auth/login", nil)
@@ -69,9 +91,9 @@ func TestAuthLogin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stateCookie := getNonceCookie(t, resp.Cookies())
+	sessionNonce := sessionManager.puts["oauth-nonce"].(string)
 
-	assert.Equal(t, nonce, stateCookie.Value)
+	assert.Equal(t, nonce, sessionNonce)
 
 	// Without the state, the URL should match our expectation
 	expectedState := url.Values{}

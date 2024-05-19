@@ -23,27 +23,10 @@ func (app *application) privacyPolicy(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "privacy-policy", app.newTemplateData(r))
 }
 
-func _oauthNonce(r *http.Request) (string, error) {
-	cookie, err := r.Cookie(oauthStateCookie)
-	if err != nil {
-		return "", err
-	}
-
-	return url.QueryUnescape(cookie.Value)
-}
-
 func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
-	// Remove the nonce cookie immediately.
-	http.SetCookie(w, &http.Cookie{
-		Name:     oauthStateCookie,
-		Value:    "",
-		Expires:  time.Unix(0, 0),
-		HttpOnly: true,
-	})
-
-	expectedNonce, err := _oauthNonce(r)
-	if err != nil {
-		app.logger.Info("No OAuth nonce cookie.", "error", err)
+	expectedNonce := app.sessionManager.PopString(r.Context(), "oauth-nonce")
+	if expectedNonce == "" {
+		app.logger.Info("No OAuth nonce present in session.")
 
 		// TODO: Return template prompting user to retry login flow
 		http.Error(w, "Invalid OAuth request.", http.StatusBadRequest)
@@ -183,6 +166,7 @@ func (app *application) completeRegistrationPost(w http.ResponseWriter, r *http.
 
 func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	nonce := uuid.New().String()
+	app.sessionManager.Put(r.Context(), "oauth-nonce", nonce)
 	cookie := http.Cookie{
 		Name:     oauthStateCookie,
 		Value:    url.QueryEscape(nonce),
