@@ -41,6 +41,15 @@ type userModel interface {
 	UpdateName(context.Context, string, string) error
 }
 
+type sessionManager interface {
+	GetString(context.Context, string) string
+	LoadAndSave(http.Handler) http.Handler
+	PopString(context.Context, string) string
+	Put(context.Context, string, any)
+	Remove(context.Context, string)
+	RenewToken(context.Context) error
+}
+
 type templateWriter interface {
 	Write(io.Writer, *http.Request, string, any) error
 }
@@ -57,7 +66,7 @@ type application struct {
 	recipeModel    recipeModel
 	userModel      userModel
 	templates      templateWriter
-	sessionManager *scs.SessionManager
+	sessionManager sessionManager
 	staticServer   staticServer
 }
 
