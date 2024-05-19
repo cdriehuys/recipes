@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -14,10 +15,20 @@ import (
 	"github.com/cdriehuys/recipes/internal/staticfiles"
 	"github.com/cdriehuys/recipes/internal/templates"
 	"github.com/neilotoole/slogt"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 func newTestApp(t *testing.T) *application {
 	logger := slogt.New(t)
+
+	oauthConfig := oauth2.Config{
+		ClientID:     "client-id",
+		ClientSecret: "client-secret",
+		Endpoint:     google.Endpoint,
+		RedirectURL:  "https://example.com",
+		Scopes:       []string{"openid"},
+	}
 
 	sessionManager := scs.New()
 	sessionManager.Lifetime = 12 * time.Hour
@@ -34,6 +45,7 @@ func newTestApp(t *testing.T) *application {
 
 	return &application{
 		logger:         logger,
+		oauthConfig:    &oauthConfig,
 		sessionManager: sessionManager,
 		staticServer:   &staticServer,
 		templates:      &templateWriter,
@@ -62,6 +74,25 @@ func newTestServer(t *testing.T, h http.Handler) *testServer {
 	}
 
 	return &testServer{ts}
+}
+
+func (ts *testServer) do(t *testing.T, req *http.Request) (int, *http.Response) {
+	baseURL, err := url.Parse(ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Need to clear the request URI or else the request fails.
+	req.RequestURI = ""
+	req.URL.Scheme = baseURL.Scheme
+	req.URL.Host = baseURL.Host
+
+	rs, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return rs.StatusCode, rs
 }
 
 // Implement a get() method on our custom testServer type. This makes a GET
