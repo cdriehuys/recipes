@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/cdriehuys/recipes/internal/models"
 	"github.com/cdriehuys/recipes/internal/validation"
 	"github.com/google/uuid"
 )
-
-const oauthStateCookie = "recipes.state"
 
 func (app *application) index(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "index", app.newTemplateData(r))
@@ -167,17 +164,6 @@ func (app *application) completeRegistrationPost(w http.ResponseWriter, r *http.
 func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	nonce := uuid.New().String()
 	app.sessionManager.Put(r.Context(), "oauth-nonce", nonce)
-	cookie := http.Cookie{
-		Name:     oauthStateCookie,
-		Value:    url.QueryEscape(nonce),
-		MaxAge:   int((5 * time.Minute).Seconds()),
-		HttpOnly: true,
-
-		// Because the OAuth callback is a redirect from a different site, this cannot be set to
-		// `Strict`.
-		SameSite: http.SameSiteLaxMode,
-	}
-	http.SetCookie(w, &cookie)
 
 	state := url.Values{}
 	state.Set("next", r.URL.Query().Get("next"))
