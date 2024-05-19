@@ -21,6 +21,9 @@ jobs:
           manifest-file: .release-please-manifest.json
           release-type: go
 
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
+
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
