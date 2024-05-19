@@ -20,6 +20,11 @@ type Recipe struct {
 	UpdatedAt    time.Time `db:"updated_at"`
 }
 
+// EditURL returns the URL to the recipe's edit view.
+func (r Recipe) EditURL() string {
+	return "/recipes/" + r.ID.String() + "/edit"
+}
+
 type RecipeModel struct {
 	DB     *pgxpool.Pool
 	Logger *slog.Logger
