@@ -1,0 +1,59 @@
+{{ define "navbar" }}
+<header class="w-full max-w-4xl mx-auto mb-8 p-2 text-xl">
+  <nav>
+    <!-- mobile -->
+    <nav class="lg:hidden">
+      <div class="flex justify-between">
+        <a href="/">My Food Stash</a>
+        <div id="hamburger-button" class="h-8 space-y-2 hidden cursor-pointer">
+          <span class="block h-0.5 w-8 bg-slate-600"></span>
+          <span class="block h-0.5 w-8 bg-slate-600"></span>
+          <span class="block h-0.5 w-8 bg-slate-600"></span>
+        </div>
+      </div>
+
+      <div id="hamburger-menu">
+        <ul class="flex-col space-y-2 text-center">
+          {{ if .IsAuthenticated -}}
+          <li><a class="underline" href="/recipes">My Recipes</a></li>
+          <li><a class="underline" href="/new-recipe">New Recipe</a></li>
+          <li>
+            <form method="POST" action="/auth/logout">
+              <input type="hidden" name="csrf_token" value='{{.CSRFToken}}'>
+              <button class="underline">Log Out</button>
+            </form>
+          {{ else -}}
+          <li>{{ template "sign-in-with-google" . }}</li>
+          {{- end }}
+        </ul>
+      </div>
+    </nav>
+
+    <!-- desktop -->
+    <ul class="hidden justify-between items-center lg:flex">
+      <li><a class="underline" href="/">Home</a></li>
+      {{ if .IsAuthenticated -}}
+      <li><a class="underline" href="/recipes">My Recipes</a></li>
+      <li><a class="underline" href="/new-recipe">New Recipe</a></li>
+      <li>
+        <form method="POST" action="/auth/logout">
+          <input type="hidden" name="csrf_token" value='{{.CSRFToken}}'>
+          <button class="underline">Log Out</button>
+        </form>
+      {{ else -}}
+      <li>{{ template "sign-in-with-google" . }}</li>
+      {{- end }}
+    </ul>
+  </nav>
+</header>
+{{ end }}
+
+{{ define "navbar_scripts" }}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById('hamburger-button');
+      const menu = document.getElementById("hamburger-menu");
+      initHamburgerMenu(btn, menu);
+    });
+  </script>
+{{ end }}
