@@ -50,36 +50,32 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
+// authenticate adds the ID of an authenticated user to the request context if ID stored in the
+// session corresponds to an existing user.
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Retrieve the authenticatedUserID value from the session using the
-		// GetInt() method. This will return the zero value for an int (0) if no
-		// "authenticatedUserID" value is in the session -- in which case we
-		// call the next handler in the chain as normal and return.
-		id := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+		id := app.sessionManager.GetString(r.Context(), sessionKeyUserID)
+
+		// If there's no ID, the user is unauthenticated and we immediately route to the next
+		// handler.
 		if id == "" {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Otherwise, we check to see if a user with that ID exists in our
-		// database.
+		// Ensure the user actually exists to prevent problems with stale sessions.
 		exists, err := app.userModel.Exists(r.Context(), id)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
 		}
 
-		// If a matching user is found, we know that the request is
-		// coming from an authenticated user who exists in our database. We
-		// create a new copy of the request (with an isAuthenticatedContextKey
-		// value of true in the request context) and assign it to r.
+		// Store the user ID in the request context for access in handlers.
 		if exists {
-			ctx := context.WithValue(r.Context(), isAuthenticatedContextKey, true)
+			ctx := context.WithValue(r.Context(), contextKeyUserID, id)
 			r = r.WithContext(ctx)
 		}
 
-		// Call the next handler in the chain.
 		next.ServeHTTP(w, r)
 	})
 }
@@ -89,7 +85,7 @@ func (app *application) requireAuthentication(next http.Handler) http.Handler {
 		// If the user is not authenticated, redirect them to the login page and
 		// return from the middleware chain so that no subsequent handlers in
 		// the chain are executed.
-		if !app.isAuthenticated(r) {
+		if !isAuthenticated(r) {
 			loginParams := url.Values{}
 			loginParams.Set("next", r.URL.Path)
 
