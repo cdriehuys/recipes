@@ -3,7 +3,13 @@
 {{ define "content" -}}{{ template "app-page" . }}{{ end }}
 
 {{ define "app-content" }}
-<h1 class="mb-8 text-3xl">Edit Recipe</h1>
+<h1 class="mb-6 text-3xl">Edit Recipe</h1>
+
+<form action='/recipes/{{.Recipe.ID}}/delete' method="POST">
+  <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+  <button class="mb-8 px-2 py-1 bg-red-700 text-white">Delete</button>
+</form>
+
 {{ if not .Form.IsValid -}}<p class="mb-4 pl-2 border-l-2 border-l-red-700 lg:mb-6">Please correct the following problems.</p>{{- end }}
 <form method="POST">
   <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
