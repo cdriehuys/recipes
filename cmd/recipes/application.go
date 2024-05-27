@@ -30,6 +30,7 @@ type oauthConfig interface {
 
 type recipeModel interface {
 	Add(context.Context, models.Recipe) error
+	Delete(context.Context, string, uuid.UUID) error
 	GetByID(context.Context, string, uuid.UUID) (models.Recipe, error)
 	List(context.Context, string) ([]models.Recipe, error)
 	Update(context.Context, models.Recipe) error

@@ -52,6 +52,18 @@ VALUES ($1, $2, $3, $4)`
 	return nil
 }
 
+func (model *RecipeModel) Delete(ctx context.Context, owner string, id uuid.UUID) error {
+	query := `DELETE FROM recipes WHERE owner = $1 AND id = $2`
+	_, err := model.DB.Exec(ctx, query, owner, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete recipe with ID %v: %w", id, err)
+	}
+
+	model.Logger.Info("Deleted recipe.", "id", id)
+
+	return nil
+}
+
 func (model *RecipeModel) GetByID(ctx context.Context, owner string, id uuid.UUID) (Recipe, error) {
 	query := `SELECT title, instructions, created_at, updated_at
 		FROM recipes WHERE owner = $1 AND id = $2`

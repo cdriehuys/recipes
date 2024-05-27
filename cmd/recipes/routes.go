@@ -32,6 +32,7 @@ func (app *application) routes() http.Handler {
 	mux.Handle("POST /new-recipe", requiresAuth.ThenFunc(app.addRecipePost))
 	mux.Handle("GET /recipes", requiresAuth.ThenFunc(app.listRecipes))
 	mux.Handle("GET /recipes/{recipeID}", requiresAuth.ThenFunc(app.getRecipe))
+	mux.Handle("POST /recipes/{recipeID}/delete", requiresAuth.ThenFunc(app.deleteRecipePost))
 	mux.Handle("GET /recipes/{recipeID}/edit", requiresAuth.ThenFunc(app.editRecipe))
 	mux.Handle("POST /recipes/{recipeID}/edit", requiresAuth.ThenFunc(app.editRecipePost))
 

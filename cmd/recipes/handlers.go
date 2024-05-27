@@ -307,6 +307,7 @@ func (app *application) editRecipe(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.Form = &form
+	data.Recipe = recipe
 
 	app.render(w, r, http.StatusOK, "edit-recipe", data)
 }
@@ -329,8 +330,16 @@ func (app *application) editRecipePost(w http.ResponseWriter, r *http.Request) {
 	form.Validate()
 
 	if !form.IsValid() {
+		recipe, err := app.recipeModel.GetByID(r.Context(), userID, id)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
 		data := app.newTemplateData(r)
 		data.Form = &form
+		data.Recipe = recipe
+
 		app.render(w, r, http.StatusOK, "edit-recipe", data)
 		return
 	}
@@ -357,4 +366,23 @@ func (app *application) editRecipePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, recipeURL, http.StatusSeeOther)
+}
+
+func (app *application) deleteRecipePost(w http.ResponseWriter, r *http.Request) {
+	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+
+	rawID := r.PathValue("recipeID")
+	id, err := uuid.Parse(rawID)
+	if err != nil {
+		app.logger.Debug("Received invalid recipe ID", "id", rawID, "error", err)
+		app.clientError(w, http.StatusNotFound)
+		return
+	}
+
+	if err := app.recipeModel.Delete(r.Context(), userID, id); err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	http.Redirect(w, r, "/recipes", http.StatusSeeOther)
 }
