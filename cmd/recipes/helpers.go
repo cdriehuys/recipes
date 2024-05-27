@@ -45,13 +45,3 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, status in
 	w.WriteHeader(status)
 	buf.WriteTo(w)
 }
-
-// isAuthenticated returns a boolean indicating if the request session is for an authenticated user.
-func (app *application) isAuthenticated(r *http.Request) bool {
-	isAuthenticated, ok := r.Context().Value(isAuthenticatedContextKey).(bool)
-	if !ok {
-		return false
-	}
-
-	return isAuthenticated
-}

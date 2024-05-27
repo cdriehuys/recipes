@@ -24,6 +24,6 @@ type templateData struct {
 func (app *application) newTemplateData(r *http.Request) templateData {
 	return templateData{
 		CSRFToken:       nosurf.Token(r),
-		IsAuthenticated: app.isAuthenticated(r),
+		IsAuthenticated: isAuthenticated(r),
 	}
 }

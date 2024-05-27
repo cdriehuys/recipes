@@ -87,13 +87,10 @@ func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := app.sessionManager.RenewToken(r.Context()); err != nil {
-		app.logger.Error("Failed to renew session token.", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := app.setAuthenticatedUser(r, infoPayload.Id); err != nil {
+		app.serverError(w, r, err)
 		return
 	}
-
-	app.sessionManager.Put(r.Context(), "authenticatedUserID", infoPayload.Id)
 
 	if created {
 		http.Redirect(w, r, "/auth/complete-registration", http.StatusSeeOther)
@@ -133,12 +130,7 @@ func (app *application) completeRegistration(w http.ResponseWriter, r *http.Requ
 }
 
 func (app *application) completeRegistrationPost(w http.ResponseWriter, r *http.Request) {
-	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
-	if userID == "" {
-		app.logger.Error("Unauthenticated user made it to registration completion.")
-		app.clientError(w, http.StatusInternalServerError)
-		return
-	}
+	userID := reqUser(r)
 
 	form := registrationForm{
 		Name: r.PostFormValue("name"),
@@ -175,12 +167,10 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) logout(w http.ResponseWriter, r *http.Request) {
-	if err := app.sessionManager.RenewToken(r.Context()); err != nil {
+	if err := app.clearAuthenticatedUser(r); err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	app.sessionManager.Remove(r.Context(), "authenticatedUserID")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
@@ -205,7 +195,7 @@ func (app *application) addRecipe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
-	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+	userID := reqUser(r)
 
 	form := RecipeForm{
 		Title:        r.PostFormValue("title"),
@@ -246,7 +236,7 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) listRecipes(w http.ResponseWriter, r *http.Request) {
-	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+	userID := reqUser(r)
 
 	recipes, err := app.recipeModel.List(r.Context(), userID)
 	if err != nil {
@@ -261,7 +251,7 @@ func (app *application) listRecipes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) getRecipe(w http.ResponseWriter, r *http.Request) {
-	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+	userID := reqUser(r)
 
 	rawID := r.PathValue("recipeID")
 	id, err := uuid.Parse(rawID)
@@ -284,7 +274,7 @@ func (app *application) getRecipe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) editRecipe(w http.ResponseWriter, r *http.Request) {
-	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+	userID := reqUser(r)
 
 	rawID := r.PathValue("recipeID")
 	id, err := uuid.Parse(rawID)
@@ -313,7 +303,7 @@ func (app *application) editRecipe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) editRecipePost(w http.ResponseWriter, r *http.Request) {
-	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+	userID := reqUser(r)
 
 	rawID := r.PathValue("recipeID")
 	id, err := uuid.Parse(rawID)
@@ -369,7 +359,7 @@ func (app *application) editRecipePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) deleteRecipePost(w http.ResponseWriter, r *http.Request) {
-	userID := app.sessionManager.GetString(r.Context(), "authenticatedUserID")
+	userID := reqUser(r)
 
 	rawID := r.PathValue("recipeID")
 	id, err := uuid.Parse(rawID)
