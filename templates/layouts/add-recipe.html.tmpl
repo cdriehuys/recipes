@@ -7,6 +7,19 @@
     <div class="mb-4 lg:mb-6">
       {{ template "form-field" formField "title" "recipe-title" "Title" .Form.Title .Form.FieldErrors.title }}
     </div>
+
+    <div class="mb-4 lg:mb-6">
+      <label class="block mb-1 text-xl">
+        Category
+        <select name="category">
+          <option value="">Uncategorized</option>
+          {{ range .Categories -}}
+          <option value="{{ .ID }}">{{ .Name }}</option>
+          {{- end }}
+        </select>
+      </label>
+    </div>
+
     <div class="mb-4 lg:mb-6">
       <label class="block mb-1 text-xl after:content-['*'] after:text-red-700" for="recipe-instructions">Instructions</label>
       <textarea class="block w-full p-1 border border-slate-600" name="instructions" rows="10" required>{{ .Form.Instructions }}</textarea>

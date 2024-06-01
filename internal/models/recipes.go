@@ -8,16 +8,28 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Recipe struct {
-	ID           uuid.UUID `db:"id"`
-	Owner        string    `db:"owner"`
-	Title        string    `db:"title"`
-	Instructions string    `db:"instructions"`
-	CreatedAt    time.Time `db:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at"`
+	ID           uuid.UUID  `db:"id"`
+	Owner        string     `db:"owner"`
+	Category     *uuid.UUID `db:"category"`
+	Title        string     `db:"title"`
+	Instructions string     `db:"instructions"`
+	CreatedAt    time.Time  `db:"created_at"`
+	UpdatedAt    time.Time  `db:"updated_at"`
+
+	CategoryName pgtype.Text `db:"category_name"`
+}
+
+func (r Recipe) CategoryDisplayName() string {
+	if r.CategoryName.Valid {
+		return r.CategoryName.String
+	}
+
+	return "Uncategorized"
 }
 
 // EditURL returns the URL to the recipe's edit view.
@@ -32,14 +44,15 @@ type RecipeModel struct {
 
 func (model *RecipeModel) Add(ctx context.Context, recipe Recipe) error {
 	query := `
-INSERT INTO recipes (id, owner, title, instructions)
-VALUES ($1, $2, $3, $4)`
+INSERT INTO recipes (id, owner, category, title, instructions)
+VALUES ($1, $2, $3, $4, $5)`
 
 	_, err := model.DB.Exec(
 		ctx,
 		query,
 		recipe.ID,
 		recipe.Owner,
+		recipe.Category,
 		recipe.Title,
 		recipe.Instructions,
 	)
@@ -79,8 +92,19 @@ func (model *RecipeModel) GetByID(ctx context.Context, owner string, id uuid.UUI
 }
 
 func (model *RecipeModel) List(ctx context.Context, owner string) ([]Recipe, error) {
-	query := `SELECT id, owner, title, instructions, created_at, updated_at
-		FROM recipes WHERE owner = $1 ORDER BY title LIMIT 100`
+	query := `SELECT
+			r.id AS id,
+			r.owner AS owner,
+			category,
+			title,
+			instructions,
+			r.created_at AS created_at,
+			r.updated_at AS updated_at,
+			c.name AS category_name
+		FROM recipes AS r
+			LEFT JOIN categories AS c
+				ON r.category = c.id
+		WHERE r.owner = $1 ORDER BY title LIMIT 100`
 	rows, err := model.DB.Query(ctx, query, owner)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list recipes: %w", err)
