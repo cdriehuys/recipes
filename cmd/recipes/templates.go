@@ -17,8 +17,9 @@ type templateData struct {
 
 	Form form
 
-	Recipe  models.Recipe
-	Recipes []models.Recipe
+	Categories []models.Category
+	Recipe     models.Recipe
+	Recipes    []models.Recipe
 }
 
 func (app *application) newTemplateData(r *http.Request) templateData {

@@ -28,6 +28,10 @@ type oauthConfig interface {
 	Exchange(context.Context, string, ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 }
 
+type categoryModel interface {
+	List(context.Context, string) ([]models.Category, error)
+}
+
 type recipeModel interface {
 	Add(context.Context, models.Recipe) error
 	Delete(context.Context, string, uuid.UUID) error
@@ -64,6 +68,7 @@ type application struct {
 	logger         *slog.Logger
 	config         config.Config
 	oauthConfig    oauthConfig
+	categoryModel  categoryModel
 	recipeModel    recipeModel
 	userModel      userModel
 	templates      templateWriter
@@ -112,6 +117,7 @@ func newApplication(
 	sessionManager := scs.New()
 	sessionManager.Store = pgxstore.New(dbpool)
 
+	categoryModel := models.CategoryModel{DB: dbpool, Logger: logger}
 	recipeModel := models.RecipeModel{DB: dbpool, Logger: logger}
 	userModel := models.UserModel{DB: dbpool, Logger: logger}
 
@@ -154,6 +160,7 @@ func newApplication(
 		logger:         logger,
 		config:         config,
 		oauthConfig:    &oauthConfig,
+		categoryModel:  &categoryModel,
 		recipeModel:    &recipeModel,
 		userModel:      &userModel,
 		templates:      templateEngine,

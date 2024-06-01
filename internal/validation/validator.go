@@ -1,6 +1,10 @@
 package validation
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/google/uuid"
+)
 
 type Validator struct {
 	NonFieldErrors []string
@@ -35,4 +39,13 @@ func NotBlank(value string) bool {
 
 func MaxLength(value string, length int) bool {
 	return len(value) <= length
+}
+
+func UUIDOrBlank(value string) bool {
+	if value == "" {
+		return true
+	}
+
+	_, err := uuid.Parse(value)
+	return err == nil
 }
