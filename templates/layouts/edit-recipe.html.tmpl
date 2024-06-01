@@ -14,7 +14,7 @@
 <form method="POST">
   <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
   <div class="mb-4 lg:mb-6">
-    {{ template "form-field" formField "title" "recipe-title" "Title" .Form.Title .Form.FieldErrors.title }}
+    {{ template "form-field" formField "title" "Title" .Form.Title .Form.FieldErrors.title }}
   </div>
   <div class="mb-4 lg:mb-6">
     <label class="block mb-1 text-xl after:content-['*'] after:text-red-700" for="recipe-instructions">Instructions</label>
