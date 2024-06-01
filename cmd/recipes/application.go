@@ -29,6 +29,7 @@ type oauthConfig interface {
 }
 
 type categoryModel interface {
+	Create(context.Context, models.Category) error
 	List(context.Context, string) ([]models.Category, error)
 }
 

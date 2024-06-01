@@ -2,22 +2,34 @@ package main
 
 import (
 	"bytes"
+	"html"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"testing"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/cdriehuys/recipes"
+	"github.com/cdriehuys/recipes/internal/assert"
+	"github.com/cdriehuys/recipes/internal/models/mock"
 	"github.com/cdriehuys/recipes/internal/staticfiles"
 	"github.com/cdriehuys/recipes/internal/templates"
+	"github.com/justinas/alice"
 	"github.com/neilotoole/slogt"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
+
+func (app *application) testAuthenticatePost(w http.ResponseWriter, r *http.Request) {
+	userID := r.PostFormValue("userID")
+	app.sessionManager.Put(r.Context(), sessionKeyUserID, userID)
+
+	w.WriteHeader(http.StatusNoContent)
+}
 
 func newTestApp(t *testing.T) *application {
 	logger := slogt.New(t)
@@ -46,6 +58,8 @@ func newTestApp(t *testing.T) *application {
 	return &application{
 		logger:         logger,
 		oauthConfig:    &oauthConfig,
+		categoryModel:  &mock.CategoryModel{},
+		userModel:      &mock.UserModel{},
 		sessionManager: sessionManager,
 		staticServer:   &staticServer,
 		templates:      &templateWriter,
@@ -57,9 +71,16 @@ type testServer struct {
 	*httptest.Server
 }
 
-// newTestServer constructs a test server that utilizes the provided handler.
-func newTestServer(t *testing.T, h http.Handler) *testServer {
-	ts := httptest.NewTLSServer(h)
+// newTestServer constructs a test server for the provided application.
+func newTestServer(t *testing.T, app *application) *testServer {
+	// Add test-only routes
+	testMiddleware := alice.New(app.sessionManager.LoadAndSave)
+
+	mux := http.NewServeMux()
+	mux.Handle("POST /test/authenticate", testMiddleware.ThenFunc(app.testAuthenticatePost))
+	mux.Handle("/", app.routes())
+
+	ts := httptest.NewServer(mux)
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -112,4 +133,54 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, strin
 	body = bytes.TrimSpace(body)
 
 	return rs.StatusCode, rs.Header, string(body)
+}
+
+func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (int, http.Header, string) {
+	rs, err := ts.Client().PostForm(ts.URL+urlPath, form)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer rs.Body.Close()
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body = bytes.TrimSpace(body)
+
+	return rs.StatusCode, rs.Header, string(body)
+}
+
+func (ts *testServer) authenticate(t *testing.T, userID string) {
+	form := url.Values{}
+	form.Add("userID", userID)
+
+	status, _, _ := ts.postForm(t, "/test/authenticate", form)
+
+	assert.Equal(t, http.StatusNoContent, status)
+}
+
+func assertRedirects(t *testing.T, headers http.Header, to string) {
+	location := headers.Get("Location")
+	assert.Equal(t, to, location)
+}
+
+func assertLoginRedirect(t *testing.T, headers http.Header, to string) {
+	params := url.Values{}
+	params.Add("next", to)
+
+	expectedRedirect := "/auth/login?" + params.Encode()
+
+	assertRedirects(t, headers, expectedRedirect)
+}
+
+var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)'>`)
+
+func extractCSRFToken(t *testing.T, body string) string {
+	matches := csrfTokenRX.FindStringSubmatch(body)
+	if len(matches) < 2 {
+		t.Fatal("no csrf token found in body")
+	}
+
+	return html.UnescapeString(string(matches[1]))
 }

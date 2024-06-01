@@ -20,6 +20,9 @@ type Config struct {
 	// the default production-oriented configuration.
 	DevMode bool
 
+	// Set to true if the app will be served over HTTP
+	Insecure bool
+
 	GoogleClientID     string
 	GoogleClientSecret string
 

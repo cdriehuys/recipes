@@ -24,6 +24,18 @@ type CategoryModel struct {
 	Logger *slog.Logger
 }
 
+func (model *CategoryModel) Create(ctx context.Context, category Category) error {
+	query := `INSERT INTO categories (id, owner, name) VALUES ($1, $2, $3)`
+	_, err := model.DB.Exec(ctx, query, category.ID, category.Owner, category.Name)
+	if err != nil {
+		return err
+	}
+
+	model.Logger.InfoContext(ctx, "Inserted new category.", "id", category.ID)
+
+	return nil
+}
+
 func (model *CategoryModel) List(ctx context.Context, owner string) ([]Category, error) {
 	query := `SELECT id, owner, name, created_at, updated_at
 		FROM categories

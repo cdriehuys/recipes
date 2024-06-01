@@ -9,7 +9,7 @@ import (
 
 func TestStaticRoutes(t *testing.T) {
 	app := newTestApp(t)
-	server := newTestServer(t, app.routes())
+	server := newTestServer(t, app)
 
 	staticPages := []string{"/", "/privacy-policy"}
 	for _, page := range staticPages {
