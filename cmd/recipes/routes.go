@@ -16,7 +16,7 @@ func (app *application) routes() http.Handler {
 		standard.Then(http.StripPrefix("/static/", app.staticServer)),
 	)
 
-	dynamic := standard.Append(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
+	dynamic := standard.Append(app.sessionManager.LoadAndSave, app.noSurf, app.authenticate)
 
 	mux.Handle("GET /{$}", dynamic.ThenFunc(app.index))
 	mux.Handle("GET /auth/callback", dynamic.ThenFunc(app.oauthCallback))
@@ -28,6 +28,8 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /auth/complete-registration", requiresAuth.ThenFunc(app.completeRegistration))
 	mux.Handle("POST /auth/complete-registration", requiresAuth.ThenFunc(app.completeRegistrationPost))
 	mux.Handle("POST /auth/logout", requiresAuth.ThenFunc(app.logout))
+	mux.Handle("GET /new-category", requiresAuth.ThenFunc(app.newCategory))
+	mux.Handle("POST /new-category", requiresAuth.ThenFunc(app.newCategoryPost))
 	mux.Handle("GET /new-recipe", requiresAuth.ThenFunc(app.addRecipe))
 	mux.Handle("POST /new-recipe", requiresAuth.ThenFunc(app.addRecipePost))
 	mux.Handle("GET /recipes", requiresAuth.ThenFunc(app.listRecipes))

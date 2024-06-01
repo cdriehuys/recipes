@@ -64,7 +64,7 @@ func TestAuthLogin(t *testing.T) {
 
 	app := newTestApp(t)
 	app.sessionManager = &sessionManager
-	server := newTestServer(t, app.routes())
+	server := newTestServer(t, app)
 
 	req := httptest.NewRequest(http.MethodGet, "/auth/login", nil)
 	status, resp := server.do(t, req)

@@ -1,0 +1,16 @@
+{{define "title"}}New Category{{end}}
+
+{{define "content"}}{{template "app-page" .}}{{end}}
+
+{{define "app-content"}}
+  <h1 class="mb-4 text-3xl">New Category</h1>
+  <p class="mb-8 text-lg">Create a new category of recipes</p>
+  <form method="post">
+    {{template "csrf-input" .}}
+    <div class="mb-4 lg:mb-6">
+      {{ template "form-field" formField "name" "name" "Name" .Form.Name .Form.FieldErrors.name }}
+    </div>
+
+    <button class="px-2 py-1 bg-green-900 text-white hover:bg-green-950" type="submit">Submit</button>
+  </form>
+{{end}}
