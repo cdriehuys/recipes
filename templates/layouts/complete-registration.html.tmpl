@@ -5,7 +5,7 @@
   <form method="POST">
     <input type="hidden" name="csrf_token" value='{{.CSRFToken}}'>
     <div class="mb-4 lg:mb-6">
-      {{ template "form-field" formField "name" "name" "Name" .Form.Name .Form.FieldErrors.name }}
+      {{ template "form-field" formField "name" "Name" .Form.Name .Form.FieldErrors.name }}
     </div>
     <button class="text-xl italic uppercase border-b-2 border-b-slate-600 transition-all hover:border-b-lime-700 hover:after:content['→']" type="submit">Submit</button>
   </form>

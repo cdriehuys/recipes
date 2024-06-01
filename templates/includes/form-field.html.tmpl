@@ -1,6 +1,8 @@
 {{ define "form-field" -}}
-<label class="block mb-1 text-xl after:content-['*'] after:text-red-700" for="{{ .ID }}">{{ .Label }}</label>
-<input class="block w-full p-1 border border-slate-600" id="{{ .ID }}" name="{{ .Name }}" required value="{{ .Value }}">
+<label class="block">
+  <span class="block mb-1 text-xl after:content-['*'] after:text-red-700">{{.Label}}</span>
+  <input class="block w-full p-1 border border-slate-600" name="{{ .Name }}" required value="{{ .Value }}">
+</label>
 {{- if .Error }}
 <p class="mt-2 pl-2 border-l-2 border-l-red-700">{{ .Error }}</p>
 {{- end }}
