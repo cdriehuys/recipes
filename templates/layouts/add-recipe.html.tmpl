@@ -18,17 +18,13 @@
           {{- end }}
         </select>
       </label>
-      {{- if .Form.FieldErrors.category }}
-      <p class="mt-2 pl-2 border-l-2 border-l-red-700">{{.Form.FieldErrors.category}}</p>
-      {{- end }}
+      {{template "field-error" .Form.FieldErrors.category}}
     </div>
 
     <div class="mb-4 lg:mb-6">
       <label class="block mb-1 text-xl after:content-['*'] after:text-red-700" for="recipe-instructions">Instructions</label>
       <textarea class="block w-full p-1 border border-slate-600" name="instructions" rows="10" required>{{ .Form.Instructions }}</textarea>
-      {{- if .Form.FieldErrors.instructions }}
-      <p class="mt-2 pl-2 border-l-2 border-l-red-700">{{ .Form.FieldErrors.instructions }}</p>
-      {{- end }}
+      {{template "field-error" .Form.FieldErrors.instructions}}
     </div>
     <button class="text-xl italic uppercase border-b-2 border-b-slate-600 transition-all hover:border-b-lime-700 hover:after:content['→']" type="submit">Submit</button>
   </form>
