@@ -52,6 +52,51 @@ func TestEqual(t *testing.T) {
 	})
 }
 
+func TestErrorExists(t *testing.T) {
+	err := errors.New("some error with a complicated error message")
+
+	testCases := []struct {
+		name        string
+		wantErr     bool
+		err         error
+		wantMessage string
+	}{
+		{
+			name:        "error unexpected",
+			wantErr:     false,
+			err:         err,
+			wantMessage: fmt.Sprintf("Expected nil, got %v", err),
+		},
+		{
+			name:    "error expected",
+			wantErr: true,
+			err:     err,
+		},
+		{
+			name:        "no error but expected",
+			wantErr:     true,
+			err:         nil,
+			wantMessage: "Expected error, got nil",
+		},
+		{
+			name:    "no error as expected",
+			wantErr: false,
+			err:     nil,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			mockT := mockT{}
+
+			assert.ErrorExists(&mockT, tt.wantErr, tt.err)
+
+			assert.Equal(t, true, mockT.isHelper)
+			assert.Equal(t, tt.wantMessage, mockT.lastErrorf)
+		})
+	}
+}
+
 func TestNilError(t *testing.T) {
 	err := errors.New("some error with a complicated error message")
 

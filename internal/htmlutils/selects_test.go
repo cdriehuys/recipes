@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cdriehuys/recipes/internal/assert"
 	"github.com/cdriehuys/recipes/internal/htmlutils"
 	"golang.org/x/net/html"
 )
@@ -85,9 +86,8 @@ func TestFindSelectInput(t *testing.T) {
 			}
 
 			got, err := htmlutils.FindSelectInput(node, tt.selectName)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("Received unexpected error: %v", err)
-			}
+
+			assert.ErrorExists(t, tt.wantErr, err)
 
 			if !reflect.DeepEqual(tt.want, got) {
 				t.Errorf("Expected %v; received %v", tt.want, got)
