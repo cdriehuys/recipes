@@ -16,6 +16,21 @@ func Equal[T comparable](t tester, expected, received T) {
 	}
 }
 
+// ErrorExists asserts than an error is nil or non-nil based on if it is wanted. If an error is
+// wanted and `err` is `nil`, the assertion fails. Similarly, if no error is wanted and `err` is
+// non-nil, the assertion fails.
+func ErrorExists(t tester, wantErr bool, err error) {
+	t.Helper()
+
+	if wantErr {
+		if err == nil {
+			t.Errorf("Expected error, got nil")
+		}
+	} else {
+		NilError(t, err)
+	}
+}
+
 // NilError fails if the provided error is not `nil`.
 func NilError(t tester, err error) {
 	t.Helper()
