@@ -15,6 +15,12 @@ import (
 
 const testDBName = "recipe_test"
 
+func markAsIntegrationTest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("models: skipping integration test")
+	}
+}
+
 func newTestDB(t *testing.T, seedScripts ...string) *pgxpool.Pool {
 	ctx := context.Background()
 
