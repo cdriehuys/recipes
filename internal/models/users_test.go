@@ -9,10 +9,20 @@ import (
 	"github.com/neilotoole/slogt"
 )
 
-func Test_Users_Exists(t *testing.T) {
+func markAsIntegrationTest(t *testing.T) {
 	if testing.Short() {
 		t.Skip("models: skipping integration test")
 	}
+}
+
+func newUserModel(t *testing.T) *models.UserModel {
+	pool := newTestDB(t, "./testdata/seed_users.sql")
+
+	return &models.UserModel{DB: pool, Logger: slogt.New(t)}
+}
+
+func Test_UserModel_Exists(t *testing.T) {
+	markAsIntegrationTest(t)
 
 	testCases := []struct {
 		name string
@@ -33,12 +43,43 @@ func Test_Users_Exists(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			pool := newTestDB(t, "./testdata/seed_users.sql")
-			model := models.UserModel{DB: pool, Logger: slogt.New(t)}
+			model := newUserModel(t)
 
 			exists, err := model.Exists(context.Background(), tt.id)
 
 			assert.Equal(t, tt.want, exists)
+			assert.NilError(t, err)
+		})
+	}
+}
+
+func Test_UserModel_RecordLogIn(t *testing.T) {
+	markAsIntegrationTest(t)
+
+	testCases := []struct {
+		name        string
+		id          string
+		wantCreated bool
+	}{
+		{
+			name:        "existing user",
+			id:          "1",
+			wantCreated: false,
+		},
+		{
+			name:        "new user",
+			id:          "2",
+			wantCreated: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			model := newUserModel(t)
+
+			created, err := model.RecordLogIn(context.Background(), tt.id)
+
+			assert.Equal(t, tt.wantCreated, created)
 			assert.NilError(t, err)
 		})
 	}
