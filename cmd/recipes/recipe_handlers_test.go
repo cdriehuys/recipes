@@ -6,7 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"golang.org/x/net/html"
+
 	"github.com/cdriehuys/recipes/internal/assert"
+	"github.com/cdriehuys/recipes/internal/htmlutils"
 	"github.com/cdriehuys/recipes/internal/models/mock"
 	"github.com/google/uuid"
 )
@@ -25,9 +28,35 @@ func Test_application_newRecipe(t *testing.T) {
 	t.Run("authenticated", func(t *testing.T) {
 		server.authenticate(t, mock.TestUserNormal)
 
-		status, _, _ := server.get(t, "/new-recipe")
+		status, _, body := server.get(t, "/new-recipe")
 
 		assert.Equal(t, http.StatusOK, status)
+
+		document, err := html.Parse(strings.NewReader(body))
+		if err != nil {
+			t.Fatalf("Failed to parse body: %v", err)
+		}
+
+		categorySelect, err := htmlutils.FindSelectInput(document, "category")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		availableCategoryIDs := make(map[string]struct{})
+		for _, opt := range categorySelect.Options {
+			availableCategoryIDs[opt.Value] = struct{}{}
+		}
+
+		for _, category := range mock.ListedCategories {
+			_, exists := availableCategoryIDs[category.ID.String()]
+			if !exists {
+				t.Errorf("Expected %s to be available as a category; got %v", category.ID.String(), availableCategoryIDs)
+			}
+		}
+
+		if _, exists := availableCategoryIDs[""]; !exists {
+			t.Errorf("Expected to find a category with no value to represent 'Uncategorized' in %v", availableCategoryIDs)
+		}
 	})
 }
 

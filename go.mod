@@ -51,6 +51,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jackc/tern/v2 v2.2.0
 	golang.org/x/crypto v0.23.0 // indirect
+	golang.org/x/net v0.25.0
 	golang.org/x/oauth2 v0.20.0
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
