@@ -9,12 +9,6 @@ import (
 	"github.com/neilotoole/slogt"
 )
 
-func markAsIntegrationTest(t *testing.T) {
-	if testing.Short() {
-		t.Skip("models: skipping integration test")
-	}
-}
-
 func newUserModel(t *testing.T) *models.UserModel {
 	pool := newTestDB(t, "./testdata/seed_users.sql")
 
@@ -80,6 +74,32 @@ func Test_UserModel_RecordLogIn(t *testing.T) {
 			created, err := model.RecordLogIn(context.Background(), tt.id)
 
 			assert.Equal(t, tt.wantCreated, created)
+			assert.NilError(t, err)
+		})
+	}
+}
+
+func Test_UserModel_UpdateName(t *testing.T) {
+	markAsIntegrationTest(t)
+
+	testCases := []struct {
+		name     string
+		id       string
+		userName string
+	}{
+		{
+			name:     "Valid ID",
+			id:       "1",
+			userName: "John Doe",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			model := newUserModel(t)
+
+			err := model.UpdateName(context.Background(), tt.id, tt.userName)
+
 			assert.NilError(t, err)
 		})
 	}
