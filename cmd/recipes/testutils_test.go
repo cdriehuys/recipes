@@ -59,6 +59,7 @@ func newTestApp(t *testing.T) *application {
 		logger:         logger,
 		oauthConfig:    &oauthConfig,
 		categoryModel:  &mock.CategoryModel{},
+		recipeModel:    &mock.RecipeModel{},
 		userModel:      &mock.UserModel{},
 		sessionManager: sessionManager,
 		staticServer:   &staticServer,

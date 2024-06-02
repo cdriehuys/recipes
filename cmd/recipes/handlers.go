@@ -229,7 +229,7 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 		data.Categories = categories
 		data.Form = &form
 
-		app.render(w, r, http.StatusOK, "add-recipe", data)
+		app.render(w, r, http.StatusUnprocessableEntity, "add-recipe", data)
 		return
 	}
 
