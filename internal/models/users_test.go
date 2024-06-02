@@ -39,7 +39,7 @@ func Test_Users_Exists(t *testing.T) {
 			exists, err := model.Exists(context.Background(), tt.id)
 
 			assert.Equal(t, tt.want, exists)
-			assert.Equal(t, nil, err)
+			assert.NilError(t, err)
 		})
 	}
 }
