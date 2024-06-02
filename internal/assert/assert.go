@@ -2,17 +2,33 @@ package assert
 
 import "strings"
 
-type errorer interface {
+type tester interface {
 	Errorf(format string, args ...any)
+	Helper()
 }
 
-func Equal[T comparable](t errorer, expected, received T) {
+// Equal fails if the two comparable values are not equivalent.
+func Equal[T comparable](t tester, expected, received T) {
+	t.Helper()
+
 	if expected != received {
 		t.Errorf("Expected %v, got %v", expected, received)
 	}
 }
 
-func StringContains(t errorer, haystack, needle string) {
+// NilError fails if the provided error is not `nil`.
+func NilError(t tester, err error) {
+	t.Helper()
+
+	if err != nil {
+		t.Errorf("Expected nil, got %v", err)
+	}
+}
+
+// StringContains fails if the substring (needle) is not found in the containing string (haystack).
+func StringContains(t tester, haystack, needle string) {
+	t.Helper()
+
 	if !strings.Contains(haystack, needle) {
 		t.Errorf("Expected to find %q in %q", needle, haystack)
 	}
