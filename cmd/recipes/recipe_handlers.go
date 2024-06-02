@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/cdriehuys/recipes/internal/models"
 	"github.com/cdriehuys/recipes/internal/validation"
@@ -86,11 +84,5 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipePath, err := url.JoinPath("/recipes", recipe.ID.String())
-	if err != nil {
-		app.serverError(w, r, fmt.Errorf("failed to build redirect path: %w", err))
-		return
-	}
-
-	http.Redirect(w, r, recipePath, http.StatusSeeOther)
+	http.Redirect(w, r, "/recipes/"+recipe.ID.String(), http.StatusSeeOther)
 }
