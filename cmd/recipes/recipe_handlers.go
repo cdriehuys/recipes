@@ -50,7 +50,7 @@ func (app *application) addRecipePost(w http.ResponseWriter, r *http.Request) {
 	form.Validate()
 
 	if !form.IsValid() {
-		app.logger.Debug("New recipe form did not validate.")
+		app.logger.DebugContext(r.Context(), "New recipe form did not validate.")
 
 		categories, err := app.categoryModel.List(r.Context(), userID)
 		if err != nil {

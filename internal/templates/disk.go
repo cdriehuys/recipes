@@ -19,7 +19,7 @@ type DiskTemplateEngine struct {
 	Logger *slog.Logger
 }
 
-func (e *DiskTemplateEngine) Write(w io.Writer, _ *http.Request, name string, data any) error {
+func (e *DiskTemplateEngine) Write(w io.Writer, r *http.Request, name string, data any) error {
 	includes, err := filepath.Glob(path.Join(e.IncludePath, "*.html.tmpl"))
 	if err != nil {
 		return fmt.Errorf("could not find includes: %w", err)
@@ -27,7 +27,7 @@ func (e *DiskTemplateEngine) Write(w io.Writer, _ *http.Request, name string, da
 
 	templatePath := path.Join(e.LayoutPath, name+".html.tmpl")
 	templateFiles := append(includes, templatePath)
-	e.Logger.Debug("Collected template files.", "templateFiles", templateFiles)
+	e.Logger.DebugContext(r.Context(), "Collected template files.", "templateFiles", templateFiles)
 
 	tpl := template.New(name).Funcs(e.FuncMap)
 
