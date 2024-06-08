@@ -3,13 +3,14 @@ package main
 import (
 	"net/http"
 
+	"github.com/cdriehuys/recipes/internal/tracing"
 	"github.com/justinas/alice"
 )
 
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	standard := alice.New(app.recoverPanic, app.requestLogger)
+	standard := alice.New(app.recoverPanic, tracing.AddTrace, app.requestLogger)
 
 	mux.Handle(
 		"/static/",
