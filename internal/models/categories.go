@@ -53,7 +53,7 @@ func (model *CategoryModel) List(ctx context.Context, owner string) ([]Category,
 		return nil, fmt.Errorf("failed to map category rows to struct: %w", err)
 	}
 
-	model.Logger.Debug("Retrieved category list from database.", "categories", categories)
+	model.Logger.DebugContext(ctx, "Retrieved category list from database.", "categories", categories)
 
 	return categories, nil
 }

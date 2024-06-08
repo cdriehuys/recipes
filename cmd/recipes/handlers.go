@@ -22,7 +22,7 @@ func (app *application) privacyPolicy(w http.ResponseWriter, r *http.Request) {
 func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 	expectedNonce := app.sessionManager.PopString(r.Context(), "oauth-nonce")
 	if expectedNonce == "" {
-		app.logger.Info("No OAuth nonce present in session.")
+		app.logger.InfoContext(r.Context(), "No OAuth nonce present in session.")
 
 		// TODO: Return template prompting user to retry login flow
 		http.Error(w, "Invalid OAuth request.", http.StatusBadRequest)
@@ -32,14 +32,15 @@ func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 	rawState := r.URL.Query().Get("state")
 	state, err := url.ParseQuery(rawState)
 	if err != nil {
-		app.logger.Warn("Malformed state received.", "error", err)
+		app.logger.WarnContext(r.Context(), "Malformed state received.", "error", err)
 		http.Error(w, "Malformed state parameter.", http.StatusBadRequest)
 		return
 	}
 
 	receivedNonce := state.Get("nonce")
 	if receivedNonce != expectedNonce {
-		app.logger.Warn(
+		app.logger.WarnContext(
+			r.Context(),
 			"Mismatched nonce. Possibly tampered OAuth flow.",
 			"expected",
 			expectedNonce,
@@ -56,8 +57,7 @@ func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 
 	token, err := app.oauthConfig.Exchange(r.Context(), code)
 	if err != nil {
-		app.logger.Error("Failed to convert authorization code to token.", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serverError(w, r, err)
 		return
 	}
 
@@ -74,15 +74,13 @@ func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 		Id string `json:"id"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&infoPayload); err != nil {
-		app.logger.Error("Failed to decode user info.", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serverError(w, r, err)
 		return
 	}
 
 	created, err := app.userModel.RecordLogIn(r.Context(), infoPayload.Id)
 	if err != nil {
-		app.logger.Error("Failed to record log in.", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serverError(w, r, err)
 		return
 	}
 
@@ -98,7 +96,7 @@ func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 
 	next, err := url.QueryUnescape(state.Get("next"))
 	if err != nil {
-		app.logger.Warn("Malformed next URL.", "url", state.Get("next"))
+		app.logger.WarnContext(r.Context(), "Malformed next URL.", "url", state.Get("next"))
 		next = "/"
 	}
 
@@ -106,7 +104,7 @@ func (app *application) oauthCallback(w http.ResponseWriter, r *http.Request) {
 		next = "/"
 	}
 
-	app.logger.Debug("Redirecting completed OAuth callback.", "next", next)
+	app.logger.DebugContext(r.Context(), "Redirecting completed OAuth callback.", "next", next)
 
 	http.Redirect(w, r, next, http.StatusSeeOther)
 }
@@ -137,7 +135,7 @@ func (app *application) completeRegistrationPost(w http.ResponseWriter, r *http.
 	form.Validate()
 
 	if !form.IsValid() {
-		app.logger.Debug("User details failed validation.")
+		app.logger.DebugContext(r.Context(), "User details failed validation.")
 		data := app.newTemplateData(r)
 		data.Form = &form
 		app.render(w, r, http.StatusOK, "complete-registration", data)
@@ -195,7 +193,7 @@ func (app *application) getRecipe(w http.ResponseWriter, r *http.Request) {
 	rawID := r.PathValue("recipeID")
 	id, err := uuid.Parse(rawID)
 	if err != nil {
-		app.logger.Debug("Received invalid recipe ID", "id", rawID, "error", err)
+		app.logger.DebugContext(r.Context(), "Received invalid recipe ID", "id", rawID, "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -218,7 +216,7 @@ func (app *application) editRecipe(w http.ResponseWriter, r *http.Request) {
 	rawID := r.PathValue("recipeID")
 	id, err := uuid.Parse(rawID)
 	if err != nil {
-		app.logger.Debug("Received invalid recipe ID", "id", rawID, "error", err)
+		app.logger.DebugContext(r.Context(), "Received invalid recipe ID", "id", rawID, "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -247,7 +245,7 @@ func (app *application) editRecipePost(w http.ResponseWriter, r *http.Request) {
 	rawID := r.PathValue("recipeID")
 	id, err := uuid.Parse(rawID)
 	if err != nil {
-		app.logger.Debug("Received invalid recipe ID", "id", rawID, "error", err)
+		app.logger.DebugContext(r.Context(), "Received invalid recipe ID", "id", rawID, "error", err)
 		app.clientError(w, http.StatusNotFound)
 		return
 	}
@@ -303,7 +301,7 @@ func (app *application) deleteRecipePost(w http.ResponseWriter, r *http.Request)
 	rawID := r.PathValue("recipeID")
 	id, err := uuid.Parse(rawID)
 	if err != nil {
-		app.logger.Debug("Received invalid recipe ID", "id", rawID, "error", err)
+		app.logger.DebugContext(r.Context(), "Received invalid recipe ID", "id", rawID, "error", err)
 		app.clientError(w, http.StatusNotFound)
 		return
 	}

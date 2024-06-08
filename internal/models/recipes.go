@@ -60,7 +60,7 @@ VALUES ($1, $2, $3, $4, $5)`
 		return fmt.Errorf("failed to insert new recipe: %w", err)
 	}
 
-	model.Logger.Info("Persisted new recipe.", "id", recipe.ID)
+	model.Logger.InfoContext(ctx, "Persisted new recipe.", "id", recipe.ID)
 
 	return nil
 }
@@ -72,7 +72,7 @@ func (model *RecipeModel) Delete(ctx context.Context, owner string, id uuid.UUID
 		return fmt.Errorf("failed to delete recipe with ID %v: %w", id, err)
 	}
 
-	model.Logger.Info("Deleted recipe.", "id", id)
+	model.Logger.InfoContext(ctx, "Deleted recipe.", "id", id)
 
 	return nil
 }
@@ -116,7 +116,7 @@ func (model *RecipeModel) List(ctx context.Context, owner string) ([]Recipe, err
 		return nil, fmt.Errorf("failed to map recipe rows to struct: %w", err)
 	}
 
-	model.Logger.Debug("Retrieved recipe list from database.", "recipes", recipes)
+	model.Logger.DebugContext(ctx, "Retrieved recipe list from database.", "recipes", recipes)
 
 	return recipes, nil
 }

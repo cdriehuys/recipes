@@ -59,7 +59,7 @@ func (model *UserModel) UpdateName(ctx context.Context, id, name string) error {
 		return fmt.Errorf("failed to update user details: %w", err)
 	}
 
-	model.Logger.Info("Updated user details.", "id", id)
+	model.Logger.InfoContext(ctx, "Updated user details.", "id", id)
 
 	return nil
 }
