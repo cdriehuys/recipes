@@ -14,6 +14,7 @@ import (
 	"github.com/cdriehuys/recipes/internal/models"
 	"github.com/cdriehuys/recipes/internal/staticfiles"
 	"github.com/cdriehuys/recipes/internal/templates"
+	"github.com/cdriehuys/recipes/internal/tracing"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -85,7 +86,10 @@ func newApplication(
 	staticFS fs.FS,
 	templateFS fs.FS,
 ) (*application, error) {
-	logger := slog.New(slog.NewTextHandler(logStream, nil))
+	handler := tracing.Handler{
+		Handler: slog.NewTextHandler(logStream, nil),
+	}
+	logger := slog.New(handler)
 
 	oauthConfig := oauth2.Config{
 		ClientID:     config.GoogleClientID,
